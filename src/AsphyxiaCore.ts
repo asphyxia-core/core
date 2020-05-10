@@ -6,10 +6,10 @@ import { pad } from 'lodash';
 import express from 'express';
 import chalk from 'chalk';
 import { LoadExternalModules } from './eamuse/ExternalModuleLoader';
-import { CreateTray } from './utils/Systray';
+// import { CreateTray } from './utils/Systray';
 
 process.title = `Asphyxia CORE ${VERSION}`;
-CreateTray();
+// CreateTray();
 
 Logger.info('                        _                _        ');
 Logger.info('        /\\             | |              (_)      ');
@@ -29,7 +29,7 @@ Logger.info(pad(`If you bought this software, request refund immediately.`, 60))
 Logger.info(` `);
 
 const EAMUSE = express();
-const WEBUI = express();
+// const WEBUI = express();
 
 EAMUSE.disable('etag');
 EAMUSE.disable('x-powered-by');
@@ -47,38 +47,45 @@ if (external.modules.length <= 0) {
 // ========== EAMUSE ============
 EAMUSE.use('*', services(`http://${ARGS.bind}:${ARGS.port}`, external.router));
 
-// ========== WEB_UI ============
-WEBUI.get('/', async (req, res) => {
-  res.send('hi');
-});
+// // ========== WEB_UI ============
+// WEBUI.get('/', async (req, res) => {
+//   res.send('hi');
+// });
 
 // ========== LISTEN ============
 const server = EAMUSE.listen(ARGS.port, ARGS.bind, () => {
-  const uiServer = WEBUI.listen(ARGS.ui_port, ARGS.ui_bind, () => {
-    Logger.info(`  [core] Server started:`);
-    const serverInfo = `http://${ARGS.bind}:${ARGS.port}`;
-    Logger.info(`       +================== EAMUSE ================+`);
-    Logger.info(`       |${pad(serverInfo, 42)}|`);
-    Logger.info(`       +==========================================+`);
-    Logger.info('');
-    const webuiInfo = `http://${ARGS.ui_bind}:${ARGS.ui_port}`;
-    Logger.info(`       +================== WEB_UI ================+`);
-    Logger.info(`       |${pad(webuiInfo, 42)}|`);
-    Logger.info(`       +==========================================+`);
-  });
+  Logger.info(`  [core] Server started:`);
+  const serverInfo = `http://${ARGS.bind}:${ARGS.port}`;
+  Logger.info(`       +==================== EA ==================+`);
+  Logger.info(`       |${pad(serverInfo, 42)}|`);
+  Logger.info(`       +==========================================+`);
+  Logger.info('');
 
-  uiServer.on('error', (err: any) => {
-    if (err && err.code == 'EADDRINUSE') {
-      Logger.info('WebUI failed to start: port might be in use.');
-      Logger.info('Use -uip argument to change port.');
-    }
-    Logger.info(' ');
-    Logger.error(`     ${err.message}`);
-    Logger.info(' ');
-    Logger.info('Press any key to exit.');
-    process.stdin.resume();
-    process.stdin.on('data', process.exit.bind(process, 0));
-  });
+  // const uiServer = WEBUI.listen(ARGS.ui_port, ARGS.ui_bind, () => {
+  //   Logger.info(`  [core] Server started:`);
+  //   const serverInfo = `http://${ARGS.bind}:${ARGS.port}`;
+  //   Logger.info(`       +==================== EA ==================+`);
+  //   Logger.info(`       |${pad(serverInfo, 42)}|`);
+  //   Logger.info(`       +==========================================+`);
+  //   Logger.info('');
+  //   const webuiInfo = `http://${ARGS.ui_bind}:${ARGS.ui_port}`;
+  //   Logger.info(`       +================== WEB_UI ================+`);
+  //   Logger.info(`       |${pad(webuiInfo, 42)}|`);
+  //   Logger.info(`       +==========================================+`);
+  // });
+
+  // uiServer.on('error', (err: any) => {
+  //   if (err && err.code == 'EADDRINUSE') {
+  //     Logger.info('WebUI failed to start: port might be in use.');
+  //     Logger.info('Use -uip argument to change port.');
+  //   }
+  //   Logger.info(' ');
+  //   Logger.error(`     ${err.message}`);
+  //   Logger.info(' ');
+  //   Logger.info('Press any key to exit.');
+  //   process.stdin.resume();
+  //   process.stdin.on('data', process.exit.bind(process, 0));
+  // });
 });
 
 server.on('error', (err: any) => {

@@ -345,6 +345,9 @@ const ENC_JP_MAP: { [key: string]: Encoding } = {
 export type KBinEncoding = 'SHIFT_JIS' | 'UTF-8' | 'EUC-JP' | 'ASCII' | 'ISO-8859-1';
 
 export function isKBin(input: Buffer): boolean {
+  if (input.length < 2) {
+    return false;
+  }
   const firstByte = input.readUInt8(0);
   const secondByte = input.readUInt8(1);
   return (
@@ -794,7 +797,7 @@ function transformJObj(obj: any, toStr = true): void {
   }
 }
 
-export function dataToXML(data: any): string {
+export function dataToXML(data: any): string | Buffer {
   const options = {
     attributeNamePrefix: '',
     attrNodeName: '@attr',
@@ -815,7 +818,43 @@ export function dataToXML(data: any): string {
 
   transformJObj(data, false);
 
-  return "<?xml version='1.0' encoding='UTF-8'?>\n" + xml;
+  return '<?xml version="1.0" encoding="UTF-8"?>\n' + xml;
+}
+
+export function dataToXMLBuffer(data: any, encoding: KBinEncoding): Buffer {
+  const options = {
+    attributeNamePrefix: '',
+    attrNodeName: '@attr',
+    textNodeName: '@content',
+    ignoreAttributes: false,
+    ignoreNameSpace: false,
+    allowBooleanAttributes: false,
+    parseNodeValue: true,
+    parseAttributeValue: false,
+    format: true,
+    supressEmptyNode: true,
+  };
+
+  transformJObj(data);
+
+  const parser = new json2xml(options);
+  const xml = parser.parse(data);
+
+  transformJObj(data, false);
+
+  if (encoding == 'EUC-JP') {
+    return Buffer.from(
+      convert("<?xml version='1.0' encoding='EUC-JP'?>\n" + xml, 'EUCJP', 'UNICODE')
+    );
+  } else if (encoding == 'SHIFT_JIS') {
+    return Buffer.from(
+      convert('<?xml version="1.0" encoding="Shift_JIS"?>\n' + xml, 'SJIS', 'UNICODE')
+    );
+  } else {
+    return Buffer.from(
+      convert('<?xml version="1.0" encoding="UTF-8"?>\n' + xml, 'UTF8', 'UNICODE')
+    );
+  }
 }
 
 export function xmlToData(xml: string | Buffer): any {

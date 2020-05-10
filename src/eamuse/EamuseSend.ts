@@ -1,6 +1,6 @@
-import { Response, Request } from 'express';
-import { defaultTo, has, set } from 'lodash';
-import { kencode, xmlToData, KBinEncoding, KAttrMap } from '../utils/KBinJSON';
+import { Response } from 'express';
+import { defaultTo, set, get } from 'lodash';
+import { kencode, xmlToData, KBinEncoding, KAttrMap, dataToXMLBuffer } from '../utils/KBinJSON';
 import { KonmaiEncrypt } from '../utils/KonmaiEncrypt';
 import LzKN from '../utils/LzKN';
 import { GetCallerModule, MODULE_PATH } from '../utils/EamuseIO';
@@ -16,7 +16,9 @@ export interface EamuseSendOption {
   status?: number;
   encoding?: KBinEncoding;
   rootName?: string;
-  attr?: KAttrMap;
+  compress?: boolean;
+  kencode?: boolean;
+  encrypt?: boolean;
 }
 
 export class EamuseSend {
@@ -42,40 +44,43 @@ export class EamuseSend {
     this.sent = true;
 
     const encoding = defaultTo(options.encoding, 'SHIFT_JIS');
-    const attr = defaultTo(options.attr, {});
-    const status = defaultTo(options.status, 0);
+    const status = defaultTo(options.status, get(content, '@attr.status', 0));
     const rootName = defaultTo(options.rootName, this.body.module);
 
-    const resAttr = {
-      ...attr,
-    };
-    const result = { response: { '@attr': resAttr } };
-    if (!has(content, '@attr')) {
-      content['@attr'] = { status };
-    } else {
-      set(content, '@attr.status', status);
-    }
+    const kencoded = defaultTo(options.kencode, this.body.kencoded);
+    const compress = defaultTo(options.compress, this.body.compress);
+    const encrypted = defaultTo(options.encrypt, this.body.encrypted);
 
+    const result = { response: {} };
+    content['@attr'] = { ...content['@attr'], status };
     set(result, `response.${rootName}`, content);
 
-    let kBin = kencode(result, encoding, true);
-    const key = new KonmaiEncrypt();
-    const pubKey = key.getPublicKey();
-    let compress = 'none';
+    let data = null;
 
-    const kBinLen = kBin.length;
-    if (this.body.compress !== 'none' && kBinLen > 500) {
-      compress = 'lz77';
-      kBin = LzKN.deflate(kBin);
+    if (kencoded) {
+      data = kencode(result, encoding, true);
+    } else {
+      data = dataToXMLBuffer(result, encoding);
     }
 
-    this.res.setHeader('X-Compress', compress);
-    if (this.body.encrypted) {
+    let xcompress = 'none';
+
+    const kBinLen = data.length;
+    if (compress && kBinLen > 500) {
+      xcompress = 'lz77';
+      data = LzKN.deflate(data);
+    }
+    this.res.setHeader('X-Compress', xcompress);
+
+    if (encrypted) {
+      const key = new KonmaiEncrypt();
+      const pubKey = key.getPublicKey();
+
       this.res.setHeader('X-Eamuse-Info', pubKey);
-      kBin = key.encrypt(kBin);
+      data = key.encrypt(data);
     }
 
-    this.res.send(kBin);
+    this.res.send(data);
   }
 
   async xml(template: string, data?: any, options?: EamuseSendOption) {
@@ -87,7 +92,11 @@ export class EamuseSend {
 
     try {
       const result = xmlToData(ejs(template, data));
-      return this.object(result, options);
+
+      const keys = Object.keys(result);
+      if (keys.length <= 0) return this.object({}, options);
+      const rootName = keys[0];
+      return this.object(result[rootName], { rootName, ...options });
     } catch (err) {
       Logger.error(err, { module: mod.name });
       return this.object({}, { status: 1 });
@@ -103,7 +112,11 @@ export class EamuseSend {
 
     try {
       const result = xmlToData(pug(template, data));
-      return this.object(result, options);
+
+      const keys = Object.keys(result);
+      if (keys.length <= 0) return this.object({}, options);
+      const rootName = keys[0];
+      return this.object(result[rootName], { rootName, ...options });
     } catch (err) {
       Logger.error(err, { module: mod.name });
       return this.object({}, { status: 1 });
@@ -125,7 +138,11 @@ export class EamuseSend {
     try {
       const xml = await ejsFile(path.join(MODULE_PATH, mod.name, template), data, {});
       const result = xmlToData(xml);
-      return this.object(result, options);
+
+      const keys = Object.keys(result);
+      if (keys.length <= 0) return this.object({}, options);
+      const rootName = keys[0];
+      return this.object(result[rootName], { rootName, ...options });
     } catch (err) {
       Logger.error(err, { module: mod.name });
       return this.object({}, { status: 1 });
@@ -146,21 +163,25 @@ export class EamuseSend {
 
     try {
       const result = xmlToData(pugFile(path.join(MODULE_PATH, mod.name, template), data));
-      return this.object(result, options);
+
+      const keys = Object.keys(result);
+      if (keys.length <= 0) return this.object({}, options);
+      const rootName = keys[0];
+      return this.object(result[rootName], { rootName, ...options });
     } catch (err) {
       Logger.error(err, { module: mod.name });
       return this.object({}, { status: 1 });
     }
   }
   success(options?: EamuseSendOption) {
-    this.object({}, { status: 0 });
+    this.object({}, { ...options, status: 0 });
   }
 
   deny(options?: EamuseSendOption) {
-    this.object({}, { status: 1 });
+    this.object({}, { ...options, status: 1 });
   }
 
   status(code: number, options?: EamuseSendOption) {
-    this.object({}, { status: code });
+    this.object({}, { ...options, status: code });
   }
 }

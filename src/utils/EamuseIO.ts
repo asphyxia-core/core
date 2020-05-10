@@ -17,7 +17,6 @@ export function GetCallerModule(): { name: string; single: boolean } {
     let inModule = false;
     let entryFile = null;
     for (const file of stack) {
-      Logger.debug(`caller: ${file}`);
       const filename: string = file.getFileName();
       if (filename.startsWith(MODULE_PATH)) {
         entryFile = path.relative(MODULE_PATH, filename);

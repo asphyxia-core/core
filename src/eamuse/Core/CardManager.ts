@@ -11,6 +11,10 @@ export function AddProfileCheck(gameCode: string, handler: () => boolean) {
   if (!ProfileCheck[gameCode]) ProfileCheck[gameCode] = handler;
 }
 
+export function RemoveProfileCheck(gameCode: string) {
+  delete ProfileCheck[gameCode];
+}
+
 cardmng.add('*', 'cardmng.inquire', async (info, data, send) => {
   const model: string = info.model;
   const modelCode = model.split(':')[0] || 'NUL';

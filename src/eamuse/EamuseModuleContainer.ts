@@ -16,9 +16,12 @@ export class EamuseModuleContainer {
     [key: string]: EamuseModuleRoute;
   };
 
+  private children: EamuseModuleContainer[];
+
   constructor() {
     this.modules = {};
     this.fallback = {};
+    this.children = [];
   }
 
   public add(gameCode: string, method: string): void;
@@ -42,8 +45,9 @@ export class EamuseModuleContainer {
     }
 
     if (gameCode instanceof EamuseModuleContainer) {
-      this.modules = { ...this.modules, ...gameCode.modules };
-      this.fallback = { ...this.fallback, ...gameCode.fallback };
+      // this.modules = { ...this.modules, ...gameCode.modules };
+      // this.fallback = { ...this.fallback, ...gameCode.fallback };
+      this.children.push(gameCode);
     }
   }
 
@@ -57,6 +61,14 @@ export class EamuseModuleContainer {
         send.deny();
       };
     }
+  }
+
+  public removeHandler(gameCode: string, method: string) {
+    delete this.modules[`${gameCode}:${method}`];
+  }
+
+  public removeUnhandled(gameCode: string) {
+    delete this.fallback[`${gameCode}`];
   }
 
   public async run(

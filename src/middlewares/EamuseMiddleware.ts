@@ -1,18 +1,11 @@
-import path from 'path';
-import { render as ejs, renderFile as ejsFile } from 'ejs';
-import { render as pug, renderFile as pugFile } from 'pug';
-
 import { RequestHandler } from 'express';
-import { findKey, get, has, defaultTo, set } from 'lodash';
+import { findKey, get, has } from 'lodash';
 
-import { isKBin, kdecode, kencode, xmlToData } from '../utils/KBinJSON';
+import { isKBin, kdecode, xmlToData } from '../utils/KBinJSON';
 import { KonmaiEncrypt } from '../utils/KonmaiEncrypt';
 import LzKN from '../utils/LzKN';
 import { Logger } from '../utils/Logger';
 import { EamuseModuleContainer } from '../eamuse/EamuseModuleContainer';
-import { GetCallerModule, MODULE_PATH } from '../utils/EamuseIO';
-import { ARGS } from '../utils/ArgParser';
-import { toHiraganaCase } from 'encoding-japanese';
 import { EamuseSend } from '../eamuse/EamuseSend';
 
 // const ACCEPT_AGENTS = ['EAMUSE.XRPC/1.0', 'EAMUSE.Httpac/1.0'];
@@ -23,7 +16,8 @@ export interface EABody {
   module: string;
   method: string;
   encrypted: boolean;
-  compress: 'none' | 'lz77' | 'forcenone';
+  compress: boolean;
+  kencoded: boolean;
   model: string;
 }
 
@@ -40,8 +34,8 @@ export const EamuseMiddleware: RequestHandler = async (req, res, next) => {
 
   if (agent.indexOf('Mozilla') >= 0) {
     // Skip browser
-    res.redirect(`http://${ARGS.ui_bind}:${ARGS.ui_port}`);
-    return;
+    // res.redirect(`http://${ARGS.ui_bind}:${ARGS.ui_port}`);
+    return res.sendStatus(404);
   }
 
   // if (ACCEPT_AGENTS.indexOf(agent) < 0) {
@@ -68,7 +62,7 @@ export const EamuseMiddleware: RequestHandler = async (req, res, next) => {
     // Logger.debug(req.url);
     const data = Buffer.concat(chunks);
     if (!data) {
-      Logger.debug(`EAM: No Data`);
+      Logger.warn(`message by ${agent} is empty`);
       res.sendStatus(404);
       return;
     }
@@ -88,16 +82,27 @@ export const EamuseMiddleware: RequestHandler = async (req, res, next) => {
     }
 
     if (!body) {
-      Logger.debug(`EAM: Failed Data Processing`);
+      Logger.error(`failed to decompress message by ${agent}`);
       res.sendStatus(404);
       return;
     }
 
-    let xml;
-    if (!isKBin(body)) {
-      xml = xmlToData(body);
-    } else {
-      xml = kdecode(body);
+    let xml = null;
+    let kencoded = false;
+    try {
+      if (!isKBin(body)) {
+        xml = xmlToData(body);
+      } else {
+        xml = kdecode(body);
+        kencoded = true;
+      }
+    } catch (err) {
+      Logger.error(`failed to parse message by ${agent}`);
+    }
+
+    if (xml == null) {
+      res.sendStatus(404);
+      return;
     }
 
     const eaModule = findKey(get(xml, 'call'), x => has(x, '@attr.method'));
@@ -116,8 +121,9 @@ export const EamuseMiddleware: RequestHandler = async (req, res, next) => {
       buffer: data,
       module: eaModule as string,
       method: eaMethod as string,
-      compress,
+      compress: compress == 'lz77',
       encrypted,
+      kencoded,
       model,
     } as EABody;
     next();
