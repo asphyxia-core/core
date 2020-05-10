@@ -1,28 +1,9 @@
 import { isNil } from 'lodash';
 
-import { KBinEncoding, KAttrMap } from '../utils/KBinJSON';
 import { EamuseInfo } from '../middlewares/EamuseMiddleware';
 import { GetCallerModule } from '../utils/EamuseIO';
 import { Logger } from '../utils/Logger';
-
-export interface EamuseSendOption {
-  status?: number;
-  encoding?: KBinEncoding;
-  rootName?: string;
-  attr?: KAttrMap;
-}
-
-export interface EamuseSend {
-  sent: boolean;
-  success: (options?: EamuseSendOption) => Promise<void>;
-  deny: (options?: EamuseSendOption) => Promise<void>;
-  status: (code: number, options?: EamuseSendOption) => Promise<void>;
-  object: (res: any, options?: EamuseSendOption) => Promise<void>;
-  xml: (res: string, data?: any, options?: EamuseSendOption) => Promise<void>;
-  pug: (res: string, data?: any, options?: EamuseSendOption) => Promise<void>;
-  xmlFile: (file: string, data?: any, options?: EamuseSendOption) => Promise<void>;
-  pugFile: (file: string, data?: any, options?: EamuseSendOption) => Promise<void>;
-}
+import { EamuseSend } from './EamuseSend';
 
 export type EamuseModuleRoute = (info: EamuseInfo, data: any, send: EamuseSend) => Promise<any>;
 

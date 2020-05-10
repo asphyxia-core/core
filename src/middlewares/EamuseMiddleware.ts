@@ -9,10 +9,11 @@ import { isKBin, kdecode, kencode, xmlToData } from '../utils/KBinJSON';
 import { KonmaiEncrypt } from '../utils/KonmaiEncrypt';
 import LzKN from '../utils/LzKN';
 import { Logger } from '../utils/Logger';
-import { EamuseSendOption, EamuseModuleContainer } from '../eamuse/EamuseModuleContainer';
+import { EamuseModuleContainer } from '../eamuse/EamuseModuleContainer';
 import { GetCallerModule, MODULE_PATH } from '../utils/EamuseIO';
 import { ARGS } from '../utils/ArgParser';
 import { toHiraganaCase } from 'encoding-japanese';
+import { EamuseSend } from '../eamuse/EamuseSend';
 
 // const ACCEPT_AGENTS = ['EAMUSE.XRPC/1.0', 'EAMUSE.Httpac/1.0'];
 
@@ -127,125 +128,9 @@ export const EamuseRoute = (container: EamuseModuleContainer): RequestHandler =>
   const route: RequestHandler = async (req, res) => {
     const body = req.body as EABody;
 
-    const sendObject = async (content: any = {}, options: EamuseSendOption = {}) => {
-      if ((this as any).sent) {
-        return;
-      } else {
-        (this as any).sent = true;
-      }
-      const encoding = defaultTo(options.encoding, 'SHIFT_JIS');
-      const attr = defaultTo(options.attr, {});
-      const status = defaultTo(options.status, 0);
-      const rootName = defaultTo(options.rootName, req.body.module);
-
-      const resAttr = {
-        ...attr,
-      };
-      const result = { response: { '@attr': resAttr } };
-      if (!has(content, '@attr')) {
-        content['@attr'] = { status };
-      } else {
-        set(content, '@attr.status', status);
-      }
-
-      set(result, `response.${rootName}`, content);
-
-      let kBin = kencode(result, encoding, true);
-      const key = new KonmaiEncrypt();
-      const pubKey = key.getPublicKey();
-      let compress = 'none';
-
-      const kBinLen = kBin.length;
-      if (body.compress !== 'none' && kBinLen > 500) {
-        compress = 'lz77';
-        kBin = LzKN.deflate(kBin);
-      }
-
-      res.setHeader('X-Compress', compress);
-      if (body.encrypted) {
-        res.setHeader('X-Eamuse-Info', pubKey);
-        kBin = key.encrypt(kBin);
-      }
-
-      res.send(kBin);
-    };
-
-    const sendXml = async (template: string, data?: any, options?: EamuseSendOption) => {
-      const mod = GetCallerModule();
-      if (!mod) {
-        Logger.error(`unexpected error: unknown module`);
-        return sendObject({}, { status: 1 });
-      }
-
-      try {
-        const result = xmlToData(ejs(template, data));
-        return sendObject(result, options);
-      } catch (err) {
-        Logger.error(err, { module: mod.name });
-        return sendObject({}, { status: 1 });
-      }
-    };
-
-    const sendPug = async (template: string, data?: any, options?: EamuseSendOption) => {
-      const mod = GetCallerModule();
-      if (!mod) {
-        Logger.error(`unexpected error: unknown module`);
-        return sendObject({}, { status: 1 });
-      }
-
-      try {
-        const result = xmlToData(pug(template, data));
-        return sendObject(result, options);
-      } catch (err) {
-        Logger.error(err, { module: mod.name });
-        return sendObject({}, { status: 1 });
-      }
-    };
-
-    const sendXmlFile = async (template: string, data?: any, options?: EamuseSendOption) => {
-      const mod = GetCallerModule();
-      if (!mod) {
-        Logger.error(`unexpected error: unknown module`);
-        return sendObject({}, { status: 1 });
-      }
-
-      if (mod.single) {
-        Logger.error(`cannot render file templates from single-file modules`, { module: mod.name });
-        return sendObject({}, { status: 1 });
-      }
-
-      try {
-        const xml = await ejsFile(path.join(MODULE_PATH, mod.name, template), data, {});
-        const result = xmlToData(xml);
-        return sendObject(result, options);
-      } catch (err) {
-        Logger.error(err, { module: mod.name });
-        return sendObject({}, { status: 1 });
-      }
-    };
-
-    const sendPugFile = async (template: string, data?: any, options?: EamuseSendOption) => {
-      const mod = GetCallerModule();
-      if (!mod) {
-        Logger.error(`unexpected error: unknown module`);
-        return sendObject({}, { status: 1 });
-      }
-
-      if (mod.single) {
-        Logger.error(`cannot render file templates from single-file modules`, { module: mod.name });
-        return sendObject({}, { status: 1 });
-      }
-
-      try {
-        const result = xmlToData(pugFile(path.join(MODULE_PATH, mod.name, template), data));
-        return sendObject(result, options);
-      } catch (err) {
-        Logger.error(err, { module: mod.name });
-        return sendObject({}, { status: 1 });
-      }
-    };
-
     const gameCode = body.model.split(':')[0];
+
+    const send = new EamuseSend(body, res);
     try {
       await container.run(
         gameCode,
@@ -253,21 +138,11 @@ export const EamuseRoute = (container: EamuseModuleContainer): RequestHandler =>
         body.method,
         { module: body.module, method: body.method, model: body.model },
         get(body.data, `call.${body.module}`),
-        {
-          sent: false,
-          success: options => sendObject(options),
-          deny: options => sendObject({}, { ...options, status: 1 }),
-          status: (status, options) => sendObject({}, { ...options, status }),
-          object: sendObject,
-          xml: sendXml,
-          pug: sendPug,
-          xmlFile: sendXmlFile,
-          pugFile: sendPugFile,
-        }
+        send
       );
     } catch (err) {
       Logger.error(err);
-      await sendObject({}, { status: 1 });
+      await send.object({}, { status: 1 });
     }
   };
 
