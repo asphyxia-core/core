@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { defaultTo, set, get } from 'lodash';
-import { kencode, xmlToData, KBinEncoding, KAttrMap, dataToXMLBuffer } from '../utils/KBinJSON';
+import { kencode, xmlToData, KBinEncoding, dataToXMLBuffer } from '../utils/KBinJSON';
 import { KonmaiEncrypt } from '../utils/KonmaiEncrypt';
 import LzKN from '../utils/LzKN';
 import { GetCallerModule, MODULE_PATH } from '../utils/EamuseIO';
@@ -43,7 +43,7 @@ export class EamuseSend {
 
     this.sent = true;
 
-    const encoding = defaultTo(options.encoding, 'SHIFT_JIS');
+    const encoding = defaultTo(options.encoding, this.body.encoding);
     const status = defaultTo(options.status, get(content, '@attr.status', 0));
     const rootName = defaultTo(options.rootName, this.body.module);
 

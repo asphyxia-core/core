@@ -3,7 +3,6 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { Logger } from './Logger';
 import path from 'path';
 import { ARGS } from './ArgParser';
-import { padStart } from 'lodash';
 import { getProfileFromRef } from '../eamuse/Core/CardManager';
 
 export const EXEC_PATH = (process as any).pkg ? path.dirname(process.argv0) : process.cwd();

@@ -1,4 +1,6 @@
-import { Encoding, codeToString, convert, stringToCode } from 'encoding-japanese';
+// import { Encoding, codeToString, convert, stringToCode } from 'encoding-japanese';
+import iconv from 'iconv-lite';
+
 import xml2json from 'fast-xml-parser';
 import { toSafeInteger, isArrayLike, get, isArray, isEmpty, toString, isNil } from 'lodash';
 import json2xml = xml2json.j2xParser;
@@ -247,9 +249,6 @@ const XML_TYPES: { [key: string]: number } = {
   nodeStart: 1,
 };
 
-const BIN_ENCODING = 'SHIFT_JIS';
-const JOBJ_ENCODING = 'UNICODE';
-
 const CHARMAP = '0123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
 const BYTEMAP: { [key: string]: number } = {
   '0': 0,
@@ -319,31 +318,45 @@ const BYTEMAP: { [key: string]: number } = {
 };
 
 const ENCODING_STRINGS: { [key: number]: KBinEncoding } = {
-  0x00: 'SHIFT_JIS',
-  0x20: 'ASCII',
-  0x40: 'ISO-8859-1',
-  0x60: 'EUC-JP',
-  0x80: 'SHIFT_JIS',
-  0xa0: 'UTF-8',
+  0x00: 'shift_jis',
+  0x20: 'ascii',
+  0x40: 'iso-8859-1',
+  0x60: 'euc-jp',
+  0x80: 'shift_jis',
+  0xa0: 'utf8',
+};
+
+const ICONV2XML: { [key: string]: string } = {
+  'shift_jis': 'Shift_JIS',
+  'ascii': 'ASCII',
+  'iso-8859-1': 'ISO-8859-1',
+  'euc-jp': 'EUC-JP',
+  'utf8': 'UTF-8',
+};
+
+const XML2ICONV: { [key: string]: KBinEncoding } = {
+  'shift_jis': 'shift_jis',
+  'shift-jis': 'shift_jis',
+  'shiftjis': 'shift_jis',
+  'ascii': 'ascii',
+  'iso-8859-1': 'iso-8859-1',
+  'euc-jp': 'euc-jp',
+  'euc_jp': 'euc-jp',
+  'eucjp': 'euc-jp',
+  'utf-8': 'utf8',
+  'utf_8': 'utf8',
+  'utf8': 'utf8',
 };
 
 const ENCODING_VALS: { [key: string]: number } = {
-  'SHIFT_JIS': 0x80,
-  'UTF-8': 0xa0,
-  'EUC-JP': 0x60,
-  'ASCII': 0x20,
-  'ISO-8859-1': 0x40,
+  'shift_jis': 0x80,
+  'utf8': 0xa0,
+  'euc-jp': 0x60,
+  'ascii': 0x20,
+  'iso-8859-1': 0x40,
 };
 
-const ENC_JP_MAP: { [key: string]: Encoding } = {
-  'SHIFT_JIS': 'SJIS',
-  'UTF-8': 'UTF8',
-  'EUC-JP': 'EUCJP',
-  'ASCII': 'UTF8',
-  'ISO-8859-1': 'UTF8',
-};
-
-export type KBinEncoding = 'SHIFT_JIS' | 'UTF-8' | 'EUC-JP' | 'ASCII' | 'ISO-8859-1';
+export type KBinEncoding = 'shift_jis' | 'utf8' | 'euc-jp' | 'ascii' | 'iso-8859-1';
 
 export function isKBin(input: Buffer): boolean {
   if (input.length < 2) {
@@ -417,11 +430,11 @@ export function packSixbit(str: string): Buffer {
   return result;
 }
 
-function bufferToString(data: Buffer, encoding: string): string {
+function bufferToString(data: Buffer, encoding: KBinEncoding): string {
   if (data == null) {
     return '';
   }
-  const str = codeToString(convert(data, JOBJ_ENCODING, ENC_JP_MAP[encoding]));
+  const str = iconv.decode(data, encoding);
   const result = str.substr(0, str.length - 1);
   if (result.startsWith(SAFEHEX)) return result;
 
@@ -442,13 +455,13 @@ function nodeToBinary(
   encoding: KBinEncoding,
   compressed: boolean
 ): void {
-  const jpEncoding = ENC_JP_MAP[encoding];
+  const jpEncoding = encoding;
 
   function appendNodeName(nodeName: string): void {
     if (compressed) {
       nodeBuf.writeBytes(packSixbit(nodeName));
     } else {
-      const enc = convert(nodeName, jpEncoding, JOBJ_ENCODING);
+      const enc = iconv.encode(nodeName, jpEncoding);
       nodeBuf.writeBytes(Buffer.from([(enc.length - 1) | 64, ...enc]));
     }
   }
@@ -484,8 +497,7 @@ function nodeToBinary(
       if (value === null || value === undefined) {
         value = '';
       }
-      const dataStr = convert(stringToCode(value as string), jpEncoding, JOBJ_ENCODING).concat([0]);
-      dataBuf.writeStream(Buffer.from(dataStr));
+      dataBuf.writeStream(iconv.encode(`${value}\0`, jpEncoding));
     } else if (nodeFormat === 'bin') {
       dataBuf.writeStream(value as Buffer);
     } else {
@@ -531,9 +543,9 @@ function nodeToBinary(
         continue;
       }
 
-      const dataStr = convert(stringToCode(v), jpEncoding, JOBJ_ENCODING).concat([0]);
-      const vData = Buffer.from(dataStr);
-      dataBuf.writeStream(vData);
+      // const dataStr = convert(stringToCode(v), jpEncoding, JOBJ_ENCODING).concat([0]);
+      // const vData = Buffer.from(dataStr);
+      dataBuf.writeStream(iconv.encode(`${v}\0`, jpEncoding));
       nodeBuf.write('u8', XML_TYPES.attr);
       appendNodeName(k);
     }
@@ -558,7 +570,7 @@ function nodeToBinary(
 
 export function kencode(
   data: any,
-  encoding: KBinEncoding = BIN_ENCODING,
+  encoding: KBinEncoding = 'shift_jis',
   compressed = true
 ): Buffer {
   const header = Buffer.from([
@@ -586,6 +598,21 @@ export function kencode(
   nodeBuf.write('u32', dataBuf.length);
 
   return Buffer.concat([header, nodeBuf.getBuffer(), dataBuf.getBuffer()]);
+}
+
+export function kgetEncoding(input: Buffer): KBinEncoding {
+  const nodeBuf = new ReadBuffer(input);
+  nodeBuf.get('u8');
+  nodeBuf.get('u8');
+  const encodingKey = Number(nodeBuf.get('u8'));
+  if (
+    Number(nodeBuf.get('u8')) !== (0xff ^ encodingKey) ||
+    ENCODING_STRINGS[encodingKey] === undefined
+  ) {
+    return 'utf8';
+  }
+
+  return ENCODING_STRINGS[encodingKey];
 }
 
 export function kdecode(input: Buffer): any {
@@ -844,26 +871,29 @@ export function dataToXMLBuffer(data: any, encoding: KBinEncoding): Buffer {
   const xml = parser.parse(data);
 
   transformJObj(data, false);
-
-  if (encoding == 'EUC-JP') {
-    return Buffer.from(
-      convert("<?xml version='1.0' encoding='EUC-JP'?>\n" + xml, 'EUCJP', 'UNICODE')
-    );
-  } else if (encoding == 'SHIFT_JIS') {
-    return Buffer.from(
-      convert('<?xml version="1.0" encoding="Shift_JIS"?>\n' + xml, 'SJIS', 'UNICODE')
-    );
-  } else {
-    return Buffer.from(
-      convert('<?xml version="1.0" encoding="UTF-8"?>\n' + xml, 'UTF8', 'UNICODE')
-    );
-  }
+  return iconv.encode(`<?xml version='1.0' encoding='${ICONV2XML[encoding]}'?>\n${xml}`, encoding);
 }
 
-export function xmlToData(xml: string | Buffer): any {
+export function detectXMLEncoding(xml: Buffer): KBinEncoding {
+  const header = iconv.decode(xml.subarray(0, Math.min(128, xml.length)), 'ascii');
+  const match = header.match(/<\?xml.*encoding=['|"](.*)['|"].*?>/);
+  if (match.length < 2) {
+    return 'utf8';
+  }
+  const encoding = XML2ICONV[match[1].toLowerCase()];
+  if (encoding == null) {
+    return 'utf8';
+  }
+
+  return encoding;
+}
+
+export function xmlToData(xml: string): any;
+export function xmlToData(xml: Buffer, encoding: KBinEncoding): any;
+export function xmlToData(xml: string | Buffer, encoding?: KBinEncoding): any {
   let xmlStr = xml;
   if (typeof xmlStr !== 'string') {
-    xmlStr = codeToString(convert(xml, 'UNICODE', 'AUTO'));
+    xmlStr = iconv.decode(xmlStr, encoding);
   }
 
   const options = {

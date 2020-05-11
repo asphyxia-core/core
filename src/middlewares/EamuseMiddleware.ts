@@ -1,7 +1,14 @@
 import { RequestHandler } from 'express';
 import { findKey, get, has } from 'lodash';
 
-import { isKBin, kdecode, xmlToData } from '../utils/KBinJSON';
+import {
+  isKBin,
+  kdecode,
+  xmlToData,
+  detectXMLEncoding,
+  KBinEncoding,
+  kgetEncoding,
+} from '../utils/KBinJSON';
 import { KonmaiEncrypt } from '../utils/KonmaiEncrypt';
 import LzKN from '../utils/LzKN';
 import { Logger } from '../utils/Logger';
@@ -18,6 +25,7 @@ export interface EABody {
   encrypted: boolean;
   compress: boolean;
   kencoded: boolean;
+  encoding: KBinEncoding;
   model: string;
 }
 
@@ -89,10 +97,15 @@ export const EamuseMiddleware: RequestHandler = async (req, res, next) => {
 
     let xml = null;
     let kencoded = false;
+
+    let encoding: KBinEncoding = 'utf8';
+
     try {
       if (!isKBin(body)) {
-        xml = xmlToData(body);
+        encoding = detectXMLEncoding(body);
+        xml = xmlToData(body, encoding);
       } else {
+        encoding = kgetEncoding(body);
         xml = kdecode(body);
         kencoded = true;
       }
@@ -123,6 +136,7 @@ export const EamuseMiddleware: RequestHandler = async (req, res, next) => {
       method: eaMethod as string,
       compress: compress == 'lz77',
       encrypted,
+      encoding,
       kencoded,
       model,
     } as EABody;
