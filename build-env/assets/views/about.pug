@@ -1,0 +1,24 @@
+extends _layout.pug
+
+block styles
+  link(rel="stylesheet", href="/static/css/about.css")
+
+block content
+  .has-text-centered
+    img(src="/static/img/logo.png" width="192px" height="192px")
+    h1.title Asphyxia CORE
+      span.tags.has-addons.has-text-weight-normal.has-margin-left-7.is-inline
+        span.tag.is-dark by
+        span.tag.is-info TsFreddie
+    if contributors && contributors.length > 0
+      p.subtitle with plugins contributed by
+      span#contrib-tags
+        each contributor in contributors
+          if contributor.link
+            span.tags.has-addons
+              span.tag.is-info #{contributor.name}
+              a.tag.is-dark(href=contributor.link)
+                span.icon.is-small
+                  i.mdi.mdi-link-variant
+          else
+            span.tag.is-info #{contributor.name}

@@ -13,7 +13,7 @@ New-Item -Path "." -Name "build" -ItemType "directory" -Force | Out-Null
 
 # Packing index.js
 Write-Output "Packing index.js"
-npx ncc build .\dist\AsphyxiaCore.js -o .\build-env --external uglify-js --external ts-node
+npx ncc build .\dist\AsphyxiaCore.js -o .\build-env --external pug --external ts-node
 
 # Packing
 Write-Output "Packing exe"

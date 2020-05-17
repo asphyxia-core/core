@@ -1,1 +1,37 @@
 extends _layout.pug
+
+block content
+  .columns
+    .column
+      .card
+        .card-content
+          .level.is-mobile
+            .level-item
+              .is-widget-label
+                p.subtitle Profile Slots
+                p.title #{profiles}/16
+            .level-item
+              span.icon.is-large.has-text-primary
+                i.mdi.mdi-48px.mdi-account-multiple
+    .column
+      .card
+        .card-content
+          .level.is-mobile
+            .level-item
+              .is-widget-label
+                p.subtitle Plugins
+                p.title #{plugins.length}
+            .level-item
+              span.icon.is-large.has-text-info
+                i.mdi.mdi-48px.mdi-view-module
+    .column
+      .card
+        .card-content
+          .level.is-mobile
+            .level-item
+              .is-widget-label
+                p.subtitle RAM Usage
+                p.title #{memory}
+            .level-item
+              span.icon.is-large.has-text-danger
+                i.mdi.mdi-48px.mdi-memory

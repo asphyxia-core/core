@@ -13,7 +13,7 @@ eacoin.add('*', 'eacoin.checkout', async (info, data, send) => {
 eacoin.add('*', 'eacoin.checkin', async (info, data, send) => {
   const result = {};
 
-  set(result, 'balance', kitem('s32', 10086));
+  set(result, 'balance', kitem('s32', 88410));
   set(result, 'sessid', kitem('str', 'DEADC0DEFEEDBEEF'));
   set(result, 'acstatus', kitem('u8', 0));
   set(result, 'sequence', kitem('s16', 1));
@@ -29,7 +29,7 @@ eacoin.add('*', 'eacoin.consume', async (info, data, send) => {
 
   set(result, 'autocharge', kitem('u8', 0));
   set(result, 'acstatus', kitem('u8', 0));
-  set(result, 'balance', kitem('s32', 10086));
+  set(result, 'balance', kitem('s32', 88410));
 
   await send.object(result);
   return;

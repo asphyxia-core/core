@@ -18,8 +18,20 @@ import { Logger } from '../utils/Logger';
 import { KDataReader } from '../utils/KDataReader';
 import { PLUGIN_PATH, WriteFile, GetCallerPlugin } from '../utils/EamuseIO';
 import { readdirSync, existsSync } from 'fs';
+import { ARGS, PluginRegisterConfig } from '../utils/ArgConfig';
 import { AddProfileCheck } from './Core/CardManager';
-import { ARGS } from '../utils/ArgConfig';
+
+/* Plugin Store */
+export const LOADED_PLUGINS: Map<
+  string,
+  {
+    instance: any;
+    contributors: {
+      name: string;
+      link?: string;
+    }[];
+  }
+> = new Map();
 
 /* Exposing API */
 const $: any = global;
@@ -36,23 +48,10 @@ if (existsSync(tsconfig)) {
   ts_node.register();
 }
 
-$.R = {
-  Route: (gameCode: string, method: string, handler: EamusePluginRoute | boolean) => {
-    if (gameCode === '*') return;
-    PLUGIN_ROUTER.add(gameCode, method, handler);
-  },
-  Unhandled: (gameCode: string, handler?: EamusePluginRoute) => {
-    if (gameCode === '*') return;
-    PLUGIN_ROUTER.unhandled(gameCode, handler);
-  },
-  ProfileCheck: (gameCode: string, handler: () => boolean) => {
-    if (gameCode === '*') return;
-    AddProfileCheck(gameCode, handler);
-  },
-};
 $.$ = (data: any) => {
   return new KDataReader(data);
 };
+
 $.$.ATTR = getAttr;
 $.$.BIGINT = getBigInt;
 $.$.BIGINTS = getBigInts;
@@ -78,10 +77,38 @@ $.U = {
   WriteFile,
 };
 
+function EnableRegisterNamespace() {
+  $.R = {
+    Route: (gameCode: string, method: string, handler: EamusePluginRoute | boolean) => {
+      if (gameCode === '*') return;
+      PLUGIN_ROUTER.add(gameCode, method, handler);
+    },
+    Unhandled: (gameCode: string, handler?: EamusePluginRoute) => {
+      if (gameCode === '*') return;
+      PLUGIN_ROUTER.unhandled(gameCode, handler);
+    },
+    ProfileCheck: (gameCode: string, handler: () => boolean) => {
+      if (gameCode === '*') return;
+      AddProfileCheck(gameCode, handler);
+    },
+    Contributor: (name: string, link?: string) => {
+      const plugin = GetCallerPlugin();
+      if (!plugin) return;
+      LOADED_PLUGINS.get(plugin.name).contributors.push({ name, link });
+    },
+    Config: PluginRegisterConfig,
+  };
+}
+
+function DisableRegisterNamespace() {
+  for (const prop in $.R) {
+    $.R[prop] = () => {};
+  }
+}
+
 if (!ARGS.dev) {
   $.console.log = () => {};
   $.console.warn = () => {};
-  $.console.error = () => {};
   $.console.debug = () => {};
   $.console.info = () => {};
 } else {
@@ -103,18 +130,18 @@ if (!ARGS.dev) {
       Logger.warn(msgs.join(' '));
     }
   };
-  $.console.error = (...msgs: any[]) => {
-    const plugin = GetCallerPlugin();
-    if (plugin) {
-      Logger.error(msgs.join(' '), { plugin: plugin.name });
-    } else {
-      Logger.error(msgs.join(' '));
-    }
-  };
 }
 
+$.console.error = (...msgs: any[]) => {
+  const plugin = GetCallerPlugin();
+  if (plugin) {
+    Logger.error(msgs.join(' '), { plugin: plugin.name });
+  } else {
+    Logger.error(msgs.join(' '));
+  }
+};
+
 export function LoadExternalPlugins() {
-  const loadedPlugins = [];
   try {
     const plugins = readdirSync(PLUGIN_PATH);
     for (const mod of plugins) {
@@ -137,32 +164,31 @@ export function LoadExternalPlugins() {
           instance = instance.default;
         }
 
-        loadedPlugins.push({ name, instance });
+        LOADED_PLUGINS.set(name, { instance, contributors: [] });
       } catch (err) {
         Logger.error(`failed to load`, { plugin: name });
         Logger.error(err);
       }
     }
 
-    for (const loaded of loadedPlugins) {
+    EnableRegisterNamespace();
+    for (const [name, plugin] of LOADED_PLUGINS) {
       try {
-        loaded.instance.register();
+        plugin.instance.register();
       } catch (err) {
-        Logger.error(`${err}`, { plugin: loaded.name });
+        Logger.error(`failed during register()`, { plugin: name });
+        Logger.error(err);
       }
     }
+    /* Disable route registering after external module has been loaded */
+    DisableRegisterNamespace();
   } catch (err) {
     Logger.warn(`can not find "plugins" directory.`);
     Logger.warn(`make sure your plugins are installed under: ${PLUGIN_PATH}`);
   }
 
-  /* Disable route registering after external module has been loaded */
-  for (const prop in $.R) {
-    $.R[prop] = () => {};
-  }
-
   return {
-    plugins: loadedPlugins,
+    plugins: LOADED_PLUGINS,
     router: PLUGIN_ROUTER,
   };
 }

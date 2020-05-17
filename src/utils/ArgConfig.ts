@@ -81,24 +81,60 @@ export interface CONFIG_OPTIONS {
   onchange?: (key: string, value: string) => void;
   slider?: boolean;
   options?: string[];
+  needRestart?: boolean;
   default: any;
 }
+
+export type CONFIG_DATA = CONFIG_OPTIONS & { current: any };
 
 let INI: any = null;
 
 const CONFIG_MAP: {
-  [key: string]: {
-    [key: string]: CONFIG_OPTIONS;
-  };
+  [key: string]: Map<string, CONFIG_OPTIONS>;
 } = {
-  core: {
-    port: { type: 'integer', range: [0, 65535], default: 8083 },
-    bind: { type: 'string', default: 'localhost' },
-    matching_port: { type: 'integer', range: [0, 65535], default: 5700 },
-    systray: { type: 'boolean', default: false },
-    webui_enabled: { name: 'Enable WebUI', type: 'boolean', default: true },
-  },
+  core: new Map(),
 };
+
+function CoreConfig() {
+  CONFIG_MAP['core'].set('port', {
+    type: 'integer',
+    range: [0, 65535],
+    default: 8083,
+    needRestart: true,
+  });
+
+  CONFIG_MAP['core'].set('bind', {
+    type: 'string',
+    default: 'localhost',
+    needRestart: true,
+  });
+
+  CONFIG_MAP['core'].set('matching_port', {
+    type: 'integer',
+    range: [0, 65535],
+    default: 5700,
+  });
+
+  CONFIG_MAP['core'].set('allow_register', {
+    // TODO: use this
+    type: 'boolean',
+    default: true,
+    desc: 'Allow registering new profile.',
+  });
+
+  CONFIG_MAP['core'].set('maintenance_mode', {
+    // TODO: use this
+    type: 'boolean',
+    default: false,
+  });
+
+  CONFIG_MAP['core'].set('enable_paseli', {
+    // TODO: use this
+    type: 'boolean',
+    default: false,
+  });
+}
+CoreConfig();
 
 export function PluginRegisterConfig(key: string, options: CONFIG_OPTIONS) {
   const plugin = GetCallerPlugin();
@@ -126,10 +162,10 @@ export function PluginRegisterConfig(key: string, options: CONFIG_OPTIONS) {
   }
 
   if (!CONFIG_MAP[plugin.name]) {
-    CONFIG_MAP[plugin.name] = {};
+    CONFIG_MAP[plugin.name] = new Map();
   }
 
-  CONFIG_MAP[plugin.name][key] = options;
+  CONFIG_MAP[plugin.name].set(key, options);
 }
 
 export function ReadConfig() {
@@ -149,25 +185,24 @@ export function ReadConfig() {
       section = INI[mod];
     }
 
-    for (const op in CONFIG_MAP[mod]) {
-      const option = CONFIG_MAP[mod][op];
-      if (!section[op]) {
-        section[op] = option.default;
+    for (const [key, option] of CONFIG_MAP[mod]) {
+      if (!section[key]) {
+        section[key] = option.default;
       } else {
         if (option.type == 'boolean') {
-          section[op] = section[op].toString() == 'true';
+          section[key] = section[key].toString() == 'true';
         } else if (option.type == 'integer') {
-          section[op] = parseInt(section[op]);
-          if (isNaN(section[op])) {
-            section[op] = option.default;
+          section[key] = parseInt(section[key]);
+          if (isNaN(section[key])) {
+            section[key] = option.default;
           }
         } else if (option.type == 'float') {
-          section[op] = parseFloat(section[op]);
-          if (isNaN(section[op])) {
-            section[op] = option.default;
+          section[key] = parseFloat(section[key]);
+          if (isNaN(section[key])) {
+            section[key] = option.default;
           }
         } else {
-          section[op] = section[op].toString();
+          section[key] = section[key].toString();
         }
       }
     }
@@ -188,7 +223,8 @@ export const CONFIG: any = new Proxy(
     get: (_, prop) => {
       return ARGS.prop || INI[prop];
     },
-    set: () => {
+    set: (_, prop, value) => {
+      INI[prop] = value;
       return true;
     },
   }

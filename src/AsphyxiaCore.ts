@@ -11,6 +11,7 @@ import { LoadExternalPlugins } from './eamuse/ExternalPluginLoader';
 import { webui } from './webui/index';
 import path from 'path';
 import { ASSETS_PATH } from './utils/EamuseIO';
+import { renderFile } from 'pug';
 
 process.title = `Asphyxia CORE ${VERSION}`;
 
@@ -41,8 +42,8 @@ if (ARGS.dev) {
   Logger.info(` [Console Output Enabled]`);
 }
 const external = LoadExternalPlugins();
-process.title = `Asphyxia CORE ${VERSION} | Plugins: ${external.plugins.length}`;
-if (external.plugins.length <= 0) {
+process.title = `Asphyxia CORE ${VERSION} | Plugins: ${external.plugins.size}`;
+if (external.plugins.size <= 0) {
   Logger.warn(chalk.yellowBright('no plugins are installed.'));
   Logger.info('');
 }

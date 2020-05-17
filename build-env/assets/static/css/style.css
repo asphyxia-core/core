@@ -6,3 +6,19 @@ aside {
   overflow-y: auto;
   overflow-x: hidden;
 }
+
+#app {
+  display: flex;
+  min-height: calc(100vh - 52px);
+  flex-direction: column;
+}
+
+.content {
+  flex: 1 0 auto;
+}
+
+html.has-aside-mobile-transition #app,
+html.has-aside-mobile-transition body,
+html.has-aside-mobile-transition nav.navbar {
+  width: calc(100vw - (100vw - 100%));
+}
