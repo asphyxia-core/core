@@ -1,4 +1,3 @@
-import { EamusePluginContainer, EamusePluginRoute } from './EamusePluginContainer';
 import { kitem, karray, kattr, dataToXML } from '../utils/KBinJSON';
 import path from 'path';
 import {
@@ -19,23 +18,11 @@ import { KDataReader } from '../utils/KDataReader';
 import { PLUGIN_PATH, WriteFile, GetCallerPlugin } from '../utils/EamuseIO';
 import { readdirSync, existsSync } from 'fs';
 import { ARGS, PluginRegisterConfig } from '../utils/ArgConfig';
-import { AddProfileCheck } from './Core/CardManager';
-
-/* Plugin Store */
-export const LOADED_PLUGINS: Map<
-  string,
-  {
-    instance: any;
-    contributors: {
-      name: string;
-      link?: string;
-    }[];
-  }
-> = new Map();
+import { EamusePlugin } from './EamusePlugin';
+import { EamuseRouteHandler } from './EamuseRouteContainer';
 
 /* Exposing API */
 const $: any = global;
-const PLUGIN_ROUTER = new EamusePluginContainer();
 
 const tsconfig = path.join(PLUGIN_PATH, 'tsconfig.json');
 /* ncc/pkg hack */
@@ -77,33 +64,36 @@ $.U = {
   WriteFile,
 };
 
-function EnableRegisterNamespace() {
-  $.R = {
-    Route: (method: string, handler: EamusePluginRoute | boolean) => {
-      if (gameCode === '*') return;
-      PLUGIN_ROUTER.add(gameCode, method, handler);
-    },
-    Unhandled: (handler?: EamusePluginRoute) => {
-      if (gameCode === '*') return;
-      PLUGIN_ROUTER.unhandled(gameCode, handler);
-    },
-    ProfileCheck: (gameCode: string, handler: () => boolean) => {
-      if (gameCode === '*') return;
-      AddProfileCheck(gameCode, handler);
-    },
-    Contributor: (name: string, link?: string) => {
-      const plugin = GetCallerPlugin();
-      if (!plugin) return;
-      LOADED_PLUGINS.get(plugin.name).contributors.push({ name, link });
-    },
-    Config: PluginRegisterConfig,
+$.R = {
+  GameCode: () => {},
+  Route: () => {},
+  Unhandled: () => {},
+  Contributor: () => {},
+  Config: () => {},
+};
+
+function EnableRegisterNamespace(plugin: EamusePlugin) {
+  $.R.GameCode = (gameCode: string) => {
+    plugin.RegisterGameCode(gameCode);
   };
+  $.R.Route = (method: string, handler?: boolean | EamuseRouteHandler) => {
+    plugin.RegisterRoute(method, handler);
+  };
+  $.R.Unhandled = (handler?: EamuseRouteHandler) => {
+    plugin.RegisterUnhandled(handler);
+  };
+  $.R.Contributor = (name: string, link?: string) => {
+    plugin.RegisterContributor(name, link);
+  };
+  $.R.Config = PluginRegisterConfig;
 }
 
 function DisableRegisterNamespace() {
-  for (const prop in $.R) {
-    $.R[prop] = () => {};
-  }
+  $.R.GameCode = () => {};
+  $.R.Route = () => {};
+  $.R.Unhandled = () => {};
+  $.R.Contributor = () => {};
+  $.R.Config = () => {};
 }
 
 if (!ARGS.dev) {
@@ -142,8 +132,13 @@ $.console.error = (...msgs: any[]) => {
 };
 
 export function LoadExternalPlugins() {
+  const loaded: EamusePlugin[] = [];
+
   try {
     const plugins = readdirSync(PLUGIN_PATH);
+
+    const instances: { instance: any; name: string }[] = [];
+
     for (const mod of plugins) {
       const name = path.basename(mod);
       const pluginPath = path.resolve(PLUGIN_PATH, mod);
@@ -165,22 +160,25 @@ export function LoadExternalPlugins() {
           instance = instance.default;
         }
 
-        LOADED_PLUGINS.set(name, { instance, contributors: [] });
+        instances.push({ instance, name });
       } catch (err) {
         Logger.error(`failed to load`, { plugin: name });
         Logger.error(err);
       }
     }
 
-    EnableRegisterNamespace();
-    for (const [name, plugin] of LOADED_PLUGINS) {
+    for (const { instance, name } of instances) {
+      const plugin = new EamusePlugin(name);
+      EnableRegisterNamespace(plugin);
       try {
-        plugin.instance.register();
+        instance.register();
+        loaded.push(plugin);
       } catch (err) {
         Logger.error(`failed during register()`, { plugin: name });
         Logger.error(err);
       }
     }
+
     /* Disable route registering after external module has been loaded */
     DisableRegisterNamespace();
   } catch (err) {
@@ -188,8 +186,5 @@ export function LoadExternalPlugins() {
     Logger.warn(`make sure your plugins are installed under: ${PLUGIN_PATH}`);
   }
 
-  return {
-    plugins: LOADED_PLUGINS,
-    router: PLUGIN_ROUTER,
-  };
+  return loaded;
 }

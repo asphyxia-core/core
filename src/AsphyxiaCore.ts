@@ -41,8 +41,8 @@ if (ARGS.dev) {
   Logger.info(` [Console Output Enabled]`);
 }
 const external = LoadExternalPlugins();
-process.title = `Asphyxia CORE ${VERSION} | Plugins: ${external.plugins.size}`;
-if (external.plugins.size <= 0) {
+process.title = `Asphyxia CORE ${VERSION} | Plugins: ${external.length}`;
+if (external.length <= 0) {
   Logger.warn(chalk.yellowBright('no plugins are installed.'));
   Logger.info('');
 }
@@ -54,7 +54,7 @@ SaveConfig();
 // ========== EAMUSE ============
 EAMUSE.set('views', path.join(ASSETS_PATH, 'views'));
 EAMUSE.set('view engine', 'pug');
-EAMUSE.use('*', services(`http://${CONFIG.bind}:${CONFIG.port}`, external.router));
+EAMUSE.use('*', services(`http://${CONFIG.bind}:${CONFIG.port}`, external));
 EAMUSE.use('/static', express.static(path.join(ASSETS_PATH, 'static')));
 EAMUSE.use(webui);
 

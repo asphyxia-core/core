@@ -2,11 +2,19 @@ import { Router } from 'express';
 
 import { EamuseMiddleware, EamuseRoute } from '../middlewares/EamuseMiddleware';
 import { core } from './Core';
-import { EamusePluginContainer } from './EamusePluginContainer';
+import { EamusePlugin } from './EamusePlugin';
+import { EamuseRootRouter } from './EamuseRootRouter';
+import { Logger } from '../utils/Logger';
 
-export const services = (url: string, plugins: EamusePluginContainer) => {
+export const ROOT_CONTAINER = new EamuseRootRouter();
+let initialized = false;
+
+export const services = (url: string, plugins: EamusePlugin[]) => {
+  if (initialized) {
+    Logger.warn(`Only one service can be handled one at a time.`);
+    return;
+  }
   const routeEamuse = Router();
-  const rootEA = new EamusePluginContainer();
 
   const coreModules = [
     'cardmng',
@@ -32,10 +40,10 @@ export const services = (url: string, plugins: EamusePluginContainer) => {
   ];
 
   /* General Information */
-  routeEamuse.use(EamuseMiddleware).all('*', EamuseRoute(rootEA));
+  routeEamuse.use(EamuseMiddleware).all('*', EamuseRoute(ROOT_CONTAINER));
 
   /* - Service */
-  rootEA.add('*', 'services.get', async (info, data, send) => {
+  ROOT_CONTAINER.add('services.get', async (info, data, send) => {
     const services = {
       '@attr': {
         expire: 10800,
@@ -67,8 +75,8 @@ export const services = (url: string, plugins: EamusePluginContainer) => {
   });
 
   /* Core */
-  rootEA.add(core);
-  rootEA.add(plugins);
+  ROOT_CONTAINER.add(core);
+  ROOT_CONTAINER.plugin(plugins);
 
   return routeEamuse;
 };

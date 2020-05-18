@@ -12,9 +12,9 @@ import {
 import { KonmaiEncrypt } from '../utils/KonmaiEncrypt';
 import LzKN from '../utils/LzKN';
 import { Logger } from '../utils/Logger';
-import { EamusePluginContainer } from '../eamuse/EamusePluginContainer';
 import { EamuseSend } from '../eamuse/EamuseSend';
 import { dataToXML } from '../utils/KBinJSON';
+import { EamuseRootRouter } from '../eamuse/EamuseRootRouter';
 
 // const ACCEPT_AGENTS = ['EAMUSE.XRPC/1.0', 'EAMUSE.Httpac/1.0'];
 
@@ -46,12 +46,6 @@ export const EamuseMiddleware: RequestHandler = async (req, res, next) => {
     (req as any).skip = true;
     return next();
   }
-
-  // if (ACCEPT_AGENTS.indexOf(agent) < 0) {
-  //   Logger.debug(`EAM: Unsupported agent: ${agent}`);
-  //   res.sendStatus(404);
-  //   return;
-  // }
 
   const eamuseInfo = req.headers['x-eamuse-info'];
 
@@ -185,7 +179,7 @@ function removeCardID(data: any): any {
   return data;
 }
 
-export const EamuseRoute = (container: EamusePluginContainer): RequestHandler => {
+export const EamuseRoute = (router: EamuseRootRouter): RequestHandler => {
   const route: RequestHandler = async (req, res, next) => {
     if ((req as any).skip) {
       next();
@@ -199,7 +193,7 @@ export const EamuseRoute = (container: EamusePluginContainer): RequestHandler =>
     const send = new EamuseSend(body, res);
     const data = removeCardID(get(body.data, `call.${body.module}`));
     try {
-      container.run(
+      router.run(
         gameCode,
         body.module,
         body.method,

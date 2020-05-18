@@ -1,9 +1,9 @@
-import { EamusePluginContainer } from '../EamusePluginContainer';
+import { EamuseRouteContainer } from '../EamuseRouteContainer';
 import { padStart, get, toSafeInteger, toString } from 'lodash';
 import { Logger } from '../../utils/Logger';
 import { SAFEHEX } from '../../utils/Consts';
 
-export const cardmng = new EamusePluginContainer();
+export const cardmng = new EamuseRouteContainer();
 
 const ProfileCheck: {
   [key: string]: () => boolean;
@@ -46,7 +46,7 @@ export function RemoveProfileCheck(gameCode: string) {
   delete ProfileCheck[gameCode];
 }
 
-cardmng.add('*', 'cardmng.inquire', async (info, data, send) => {
+cardmng.add('cardmng.inquire', async (info, data, send) => {
   const model: string = info.model;
   const modelCode = model.split(':')[0] || 'NUL';
 
@@ -69,7 +69,7 @@ cardmng.add('*', 'cardmng.inquire', async (info, data, send) => {
   return;
 });
 
-cardmng.add('*', 'cardmng.getrefid', async (info, data, send) => {
+cardmng.add('cardmng.getrefid', async (info, data, send) => {
   const refid = toRefID(PROFILE_QUEUE_INDEX++);
   if (PROFILE_QUEUE_INDEX >= 1024) {
     PROFILE_QUEUE_INDEX = 0;
@@ -79,7 +79,7 @@ cardmng.add('*', 'cardmng.getrefid', async (info, data, send) => {
   return;
 });
 
-cardmng.add('*', 'cardmng.authpass', async (info, data, send) => {
+cardmng.add('cardmng.authpass', async (info, data, send) => {
   const refid = toQueueIndex(get(data, '@attr.refid', null));
   const pass = toSafeInteger(get(data, '@attr.pass', '0000'));
 
@@ -91,7 +91,7 @@ cardmng.add('*', 'cardmng.authpass', async (info, data, send) => {
   await send.success();
 });
 
-cardmng.add('*', 'cardmng.bindmodel', async (info, data, send) => {
+cardmng.add('cardmng.bindmodel', async (info, data, send) => {
   const refid = get(data, '@attr.refid', 'DEADC0DEFEEDBEEF');
   await send.object({ '@attr': { dataid: refid } });
 });

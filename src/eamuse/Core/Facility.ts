@@ -1,11 +1,11 @@
 import { ip2int, kitem } from '../../utils/KBinJSON';
 import { VERSION } from '../../utils/Consts';
-import { EamusePluginContainer } from '../EamusePluginContainer';
+import { EamuseRouteContainer } from '../EamuseRouteContainer';
 import { CONFIG } from '../../utils/ArgConfig';
 
-export const facility = new EamusePluginContainer();
+export const facility = new EamuseRouteContainer();
 
-facility.add('*', 'facility.get', async (info, data, send) => {
+facility.add('facility.get', async (info, data, send) => {
   const port = CONFIG.matching_port;
 
   const result = {

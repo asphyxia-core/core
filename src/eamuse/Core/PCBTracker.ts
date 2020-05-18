@@ -1,8 +1,8 @@
-import { EamusePluginContainer } from '../EamusePluginContainer';
+import { EamuseRouteContainer } from '../EamuseRouteContainer';
 
-export const pcbtracker = new EamusePluginContainer();
+export const pcbtracker = new EamuseRouteContainer();
 
-pcbtracker.add('*', 'pcbtracker.alive', async (info, data, send) => {
+pcbtracker.add('pcbtracker.alive', async (info, data, send) => {
   const result = {
     '@attr': {
       ecenable: 1,

@@ -3,6 +3,7 @@ import { KonmaiEncrypt } from './utils/KonmaiEncrypt';
 import iconv from 'iconv-lite';
 import { writeFileSync, readFileSync, write } from 'fs';
 import { ReadConfig, SaveConfig } from './utils/ArgConfig';
+import { renderFile as pugFile } from 'pug';
 
 // const data = readFileSync('response.bin');
 // const decode = kdecode(data);
@@ -34,5 +35,8 @@ import { ReadConfig, SaveConfig } from './utils/ArgConfig';
 // console.log(data2);
 // console.log(JSON.stringify(xmlToData(data2), null, 2));
 
-ReadConfig();
-SaveConfig();
+// ReadConfig();
+// SaveConfig();
+
+const data = xmlToData(pugFile('build\\plugins\\sdvx\\template\\common4.pug'));
+console.log(data);

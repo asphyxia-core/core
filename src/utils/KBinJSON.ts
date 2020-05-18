@@ -815,6 +815,10 @@ function stringed(data: any): any {
 }
 
 function unstringed(data: any): any {
+  if (data === '') return {};
+
+  if (typeof data == 'string') return kitem('str', data);
+
   if (typeof data !== 'object') return undefined;
 
   let result: any = {};

@@ -3,7 +3,6 @@ import { existsSync, readFileSync } from 'fs';
 import session from 'express-session';
 import flash from 'connect-flash';
 import { VERSION } from '../utils/Consts';
-import { LOADED_PLUGINS } from '../eamuse/ExternalPluginLoader';
 import { CONFIG_MAP, CONFIG_DATA, CONFIG, CONFIG_OPTIONS, SaveConfig } from '../utils/ArgConfig';
 import { get } from 'lodash';
 import { Converter } from 'showdown';
@@ -12,6 +11,7 @@ import { urlencoded } from 'body-parser';
 import { Logger } from '../utils/Logger';
 import humanize from 'humanize-string';
 import path from 'path';
+import { ROOT_CONTAINER } from '../eamuse/index';
 
 export const webui = Router();
 const md = new Converter({
@@ -25,7 +25,7 @@ function data(title: string, attr?: any) {
   return {
     title,
     version: VERSION,
-    plugins: Array.from(LOADED_PLUGINS.keys()),
+    plugins: ROOT_CONTAINER.Plugins.map(p => p.Name),
     ...attr,
   };
 }
@@ -176,7 +176,6 @@ webui.post('*', urlencoded({ extended: true }), async (req, res) => {
     SaveConfig();
   }
 
-  Logger.debug(JSON.stringify(req.body));
   res.redirect(req.originalUrl);
 });
 
@@ -186,8 +185,8 @@ webui.get('/profiles', async (req, res) => {
 
 webui.get('/about', async (req, res) => {
   const contributors = new Map<string, { name: string; link?: string }>();
-  for (const [, plugin] of LOADED_PLUGINS) {
-    for (const c of plugin.contributors) {
+  for (const plugin of ROOT_CONTAINER.Plugins) {
+    for (const c of plugin.Contributors) {
       contributors.set(c.name, c);
     }
   }
@@ -208,7 +207,9 @@ webui.get('/plugin/:plugin', async (req, res) => {
   }
 
   const config = configData(pluginName);
-  const contributors = get(LOADED_PLUGINS.get(pluginName), 'contributors', []);
+  const plugin = ROOT_CONTAINER.getPluginByName(pluginName);
+  const contributors = plugin ? plugin.Contributors : [];
+  const gameCodes = plugin ? plugin.GameCodes : [];
 
-  res.render('plugin', data(pluginName.toUpperCase(), { readme, config, contributors }));
+  res.render('plugin', data(pluginName.toUpperCase(), { readme, config, contributors, gameCodes }));
 });

@@ -1,16 +1,16 @@
 import { set } from 'lodash';
 
 import { kitem } from '../../utils/KBinJSON';
-import { EamusePluginContainer } from '../EamusePluginContainer';
+import { EamuseRouteContainer } from '../EamuseRouteContainer';
 
-export const eacoin = new EamusePluginContainer();
+export const eacoin = new EamuseRouteContainer();
 
-eacoin.add('*', 'eacoin.checkout', async (info, data, send) => {
+eacoin.add('eacoin.checkout', async (info, data, send) => {
   await send.success();
   return;
 });
 
-eacoin.add('*', 'eacoin.checkin', async (info, data, send) => {
+eacoin.add('eacoin.checkin', async (info, data, send) => {
   const result = {};
 
   set(result, 'balance', kitem('s32', 88410));
@@ -24,7 +24,7 @@ eacoin.add('*', 'eacoin.checkin', async (info, data, send) => {
   return;
 });
 
-eacoin.add('*', 'eacoin.consume', async (info, data, send) => {
+eacoin.add('eacoin.consume', async (info, data, send) => {
   const result = {};
 
   set(result, 'autocharge', kitem('u8', 0));
