@@ -16,7 +16,7 @@ import {
 import { Logger } from '../utils/Logger';
 import { KDataReader } from '../utils/KDataReader';
 import { PLUGIN_PATH, WriteFile, GetCallerPlugin } from '../utils/EamuseIO';
-import { readdirSync, existsSync } from 'fs';
+import { readdirSync, existsSync, statSync } from 'fs';
 import { ARGS, PluginRegisterConfig } from '../utils/ArgConfig';
 import { EamusePlugin } from './EamusePlugin';
 import { EamuseRouteHandler } from './EamuseRouteContainer';
@@ -105,7 +105,7 @@ if (!ARGS.dev) {
   $.console.log = (...msgs: any[]) => {
     const plugin = GetCallerPlugin();
     if (plugin) {
-      Logger.info(msgs.join(' '), { plugin: plugin.name });
+      Logger.info(msgs.join(' '), { plugin: plugin.identifier });
     } else {
       Logger.info(msgs.join(' '));
     }
@@ -115,7 +115,7 @@ if (!ARGS.dev) {
   $.console.warn = (...msgs: any[]) => {
     const plugin = GetCallerPlugin();
     if (plugin) {
-      Logger.warn(msgs.join(' '), { plugin: plugin.name });
+      Logger.warn(msgs.join(' '), { plugin: plugin.identifier });
     } else {
       Logger.warn(msgs.join(' '));
     }
@@ -125,7 +125,7 @@ if (!ARGS.dev) {
 $.console.error = (...msgs: any[]) => {
   const plugin = GetCallerPlugin();
   if (plugin) {
-    Logger.error(msgs.join(' '), { plugin: plugin.name });
+    Logger.error(msgs.join(' '), { plugin: plugin.identifier });
   } else {
     Logger.error(msgs.join(' '));
   }
@@ -135,22 +135,21 @@ export function LoadExternalPlugins() {
   const loaded: EamusePlugin[] = [];
 
   try {
-    const plugins = readdirSync(PLUGIN_PATH);
+    const plugins = readdirSync(PLUGIN_PATH).filter(fileName =>
+      statSync(path.join(PLUGIN_PATH, fileName)).isDirectory()
+    );
 
     const instances: { instance: any; name: string }[] = [];
 
     for (const mod of plugins) {
       const name = path.basename(mod);
       const pluginPath = path.resolve(PLUGIN_PATH, mod);
-      const pluginExt = path.extname(pluginPath);
 
       if (
-        pluginPath.endsWith('.d.ts') ||
         mod.startsWith('_') ||
         mod.startsWith('.') ||
         mod.startsWith('core') ||
-        mod == 'node_modules' ||
-        (pluginExt !== '' && pluginExt !== '.ts' && pluginExt !== '.js')
+        mod == 'node_modules'
       )
         continue;
 

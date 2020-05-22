@@ -9,7 +9,7 @@ export class EamuseRootRouter {
   private pluginMap: {
     [gameCode: string]: EamusePlugin;
   };
-  private pluginMapName: {
+  private pluginMapID: {
     [name: string]: EamusePlugin;
   };
   private plugins: EamusePlugin[];
@@ -17,7 +17,7 @@ export class EamuseRootRouter {
   constructor() {
     this.core = new EamuseRouteContainer();
     this.pluginMap = {};
-    this.pluginMapName = {};
+    this.pluginMapID = {};
   }
 
   public add(method: string): void;
@@ -34,32 +34,32 @@ export class EamuseRootRouter {
         if (this.pluginMap[code]) {
           Logger.warn(
             `register failed - '${code}' is already registered by ${this.pluginMap[code].Name}`,
-            { plugin: plugin.Name }
+            { plugin: plugin.Identifier }
           );
         } else {
           this.pluginMap[code] = plugin;
         }
       }
-      this.pluginMapName[plugin.Name] = plugin;
+      this.pluginMapID[plugin.Identifier] = plugin;
     }
   }
 
-  public run(
+  public async run(
     gameCode: string,
     moduleName: string,
     method: string,
     info: EamuseInfo,
     data: any,
     send: EamuseSend
-  ): boolean {
-    if (this.core.run(moduleName, method, info, data, send)) return;
+  ) {
+    if (await this.core.run(moduleName, method, info, data, send)) return;
     if (
       this.pluginMap[gameCode] &&
-      this.pluginMap[gameCode].run(moduleName, method, info, data, send)
+      (await this.pluginMap[gameCode].run(moduleName, method, info, data, send))
     )
       return;
 
-    send.deny();
+    await send.deny();
     return;
   }
 
@@ -68,7 +68,7 @@ export class EamuseRootRouter {
   }
 
   public getPluginByName(gameCode: string) {
-    return this.pluginMapName[gameCode];
+    return this.pluginMapID[gameCode];
   }
 
   public get Plugins() {

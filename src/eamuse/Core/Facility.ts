@@ -30,7 +30,7 @@ facility.add('facility.get', async (info, data, send) => {
       class: kitem('u8', 0),
     },
     portfw: {
-      globalip: kitem('ip4', ip2int('127.0.0.1')),
+      globalip: kitem('ip4', ip2int((info as any).ip)),
       globalport: kitem('u16', port),
       privateport: kitem('u16', port),
     },
@@ -56,5 +56,5 @@ facility.add('facility.get', async (info, data, send) => {
     },
   };
 
-  await send.object(result);
+  send.object(result);
 });

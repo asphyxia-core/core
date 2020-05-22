@@ -13,11 +13,11 @@ New-Item -Path "." -Name "build" -ItemType "directory" -Force | Out-Null
 
 # Packing index.js
 Write-Output "Packing index.js"
-npx ncc build .\dist\AsphyxiaCore.js -o .\build-env --external pug --external ts-node
+npx ncc build .\dist\AsphyxiaCore.js -o .\build-env --external pug --external ts-node --external systray
 
 # Packing
 Write-Output "Packing exe"
-npx pkg .\build-env -t "node12-win-x64,node12-win-x86,node12-linux-x64" -o .\build\asphyxia-core
+npx pkg .\build-env -t "node12-win-x64,node12-win-x86,node12-linux-x64" -o .\build\asphyxia-core --options no-warnings
 
 # Renaming 64bit versions
 # Move-Item -Path ".\build\asphyxia-x64.exe" -Destination ".\build\asphyxia.exe" -Force | Out-Null

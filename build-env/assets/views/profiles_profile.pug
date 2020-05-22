@@ -1,0 +1,81 @@
+extends _layout.pug
+
+block content
+ .columns
+    .column
+      .card
+        header.card-header
+          p.card-header-title
+            span.icon
+              i.mdi.mdi-account
+            | Profile
+        .card-content
+          .columns
+            .column.is-narrow
+              .image.is-64x64#profile-icon(jdenticon=profile.name jdenticon-size=64)
+            .column
+              .field.is-horizontal.is-narrow
+                .field-label
+                  label.label ID
+                .field-body
+                  .field
+                    .control
+                      span.tag.is-info#refid #{profile.refid}
+              form(method='post')
+                .field.is-horizontal.is-narrow
+                  .field-label.is-normal
+                    label.label PIN
+                  .field-body
+                    .field
+                      .control
+                        input.input(type='password' size='4' maxlength='4' placeholder='••••' name='pin')
+                .field.is-horizontal.is-narrow(data-tooltip="Only used in WebUI")
+                  .field-label.is-normal
+                    label.label Name
+                  .field-body
+                    .field
+                      .control
+                        input.input#name-input(type='text' placeholder=profile.name name='name')
+                .field.is-grouped
+                  .control.is-expanded
+                    if formMessage
+                      if formMessage.danger
+                        .notification.is-danger.is-light #{formMessage.message}
+                      else
+                        .notification.is-success.is-light #{formMessage.message}
+                  .control
+                    button.button.is-link(type='submit') Change
+    .column
+      .card
+        header.card-header
+          p.card-header-title
+            span.icon
+              i.mdi.mdi-account
+            | Cards
+        .card-content
+          .field.is-horizontal.is-narrow
+            .field-label.is-normal
+              label.label New Card
+            .field-body
+              .field.has-addons
+                .control.is-expanded
+                  input.input#card-input(type='text' placeholder='Card Number' name='card')
+                .control
+                  button.button.is-primary#add-card Add
+          each card in profile.cards
+            .ecard.box.is-paddingless(geopattern=card.cid)
+              .ecard-brand ASPHYXIA
+              .ecard-print  
+                .desc Card Number
+                .print #{card.print.replace(/[^a-z0-9]+/gi, '').replace(/(.{4})/g, '$1 ')}
+              .ecard-number 
+                .desc NFC
+                .print #{card.cid}
+              .ecard-logo
+              button.button.is-danger.ecard-delete(deleting=card.cid data-tooltip="Delete this card")
+                span.icon
+                  i.mdi.mdi-trash-can.mdi-24px
+
+
+block scripts
+  script(type="text/javascript" src="/static/js/profile.js")

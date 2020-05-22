@@ -149,36 +149,6 @@ export const EamuseMiddleware: RequestHandler = async (req, res, next) => {
   });
 };
 
-function uncarded(str: string): string {
-  return str.replace(/(^|\s*)[0|E][A-F|a-f|0-9]{15}($|\s+)/g, '$1DEADC0DEFEEDBEEF$2');
-}
-
-function removeCardID(data: any): any {
-  if (typeof data !== 'object') return undefined;
-
-  if (Array.isArray(data)) {
-    for (const element of data) {
-      removeCardID(element);
-    }
-  } else {
-    for (const prop in data) {
-      if (prop == '@attr') {
-        for (const attr in data[prop]) {
-          data['@attr'][attr] = uncarded(data[prop][attr]);
-        }
-      } else if (prop == '@content') {
-        const content = data['@content'];
-        if (typeof content == 'string') {
-          data['@content'] = uncarded(content);
-        }
-      } else {
-        removeCardID(data[prop]);
-      }
-    }
-  }
-  return data;
-}
-
 export const EamuseRoute = (router: EamuseRootRouter): RequestHandler => {
   const route: RequestHandler = async (req, res, next) => {
     if ((req as any).skip) {
@@ -191,19 +161,19 @@ export const EamuseRoute = (router: EamuseRootRouter): RequestHandler => {
     const gameCode = body.model.split(':')[0];
 
     const send = new EamuseSend(body, res);
-    const data = removeCardID(get(body.data, `call.${body.module}`));
+    const data = get(body.data, `call.${body.module}`);
+    const info = { gameCode, module: body.module, method: body.method, model: body.model };
+
+    // HACK: give facility ip
+    if (body.module == 'facility' && body.method == 'get') {
+      (info as any).ip = req.ip.includes(':') ? '127.0.0.1' : req.ip;
+    }
+
     try {
-      router.run(
-        gameCode,
-        body.module,
-        body.method,
-        { gameCode, module: body.module, method: body.method, model: body.model },
-        data,
-        send
-      );
+      await router.run(gameCode, body.module, body.method, info, data, send);
     } catch (err) {
       Logger.error(err);
-      await send.object({}, { status: 1 });
+      send.object({}, { status: 1 });
     }
   };
 

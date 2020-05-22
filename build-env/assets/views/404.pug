@@ -1,0 +1,14 @@
+extends _layout.pug
+
+block content
+  - var style = `background: ${random};` 
+  section.hero.is-dark(style=style)
+    .hero-body
+      .columns
+        .column.is-narrow
+          .image.is-128x128
+            img(src=`data:image/svg+xml;base64,${art}` style="background-color: #ffffffaa")
+        .column
+          h1.title Oh well.
+          p.subtitle At least I have a random pattern for you to look at.
+          p.has-text-right.is-size-7 How did you end up here anyway?

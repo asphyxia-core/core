@@ -1,0 +1,21 @@
+extends _layout.pug
+
+block content
+  .notification.is-danger
+    h4.title 
+      span.icon
+        i.mdi.mdi-alert
+      | Danger Zone
+    p Here you can erase each plugin's data. You will <b>NOT</b> be able to undo any action here.
+    p Note that plugins that you already uninstalled will still show up here, so you can clear their data if you don't want them anymore.
+    p PROCEED WITH CAUTION
+  .columns
+    .column
+      .card
+        header.card-header
+          p.card-header-title
+            span.icon
+              i.mdi.mdi-account
+            | Profile
+        .card-content
+    .column

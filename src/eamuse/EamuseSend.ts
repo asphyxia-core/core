@@ -98,7 +98,7 @@ export class EamuseSend {
       const rootName = keys[0];
       return this.object(result[rootName], { rootName, ...options });
     } catch (err) {
-      Logger.error(err, { plugin: plugin.name });
+      Logger.error(err, { plugin: plugin.identifier });
       return this.object({}, { status: 1 });
     }
   }
@@ -118,7 +118,7 @@ export class EamuseSend {
       const rootName = keys[0];
       return this.object(result[rootName], { rootName, ...options });
     } catch (err) {
-      Logger.error(err, { plugin: plugin.name });
+      Logger.error(err, { plugin: plugin.identifier });
       return this.object({}, { status: 1 });
     }
   }
@@ -130,15 +130,8 @@ export class EamuseSend {
       return this.object({}, { status: 1 });
     }
 
-    if (plugin.single) {
-      Logger.error(`cannot render file templates from single-file plugins`, {
-        plugin: plugin.name,
-      });
-      return this.object({}, { status: 1 });
-    }
-
     try {
-      const xml = await ejsFile(path.join(PLUGIN_PATH, plugin.name, template), data, {});
+      const xml = await ejsFile(path.join(PLUGIN_PATH, plugin.identifier, template), data, {});
       const result = xmlToData(xml);
 
       const keys = Object.keys(result);
@@ -146,7 +139,7 @@ export class EamuseSend {
       const rootName = keys[0];
       return this.object(result[rootName], { rootName, ...options });
     } catch (err) {
-      Logger.error(err, { plugin: plugin.name });
+      Logger.error(err, { plugin: plugin.identifier });
       return this.object({}, { status: 1 });
     }
   }
@@ -158,22 +151,15 @@ export class EamuseSend {
       return this.object({}, { status: 1 });
     }
 
-    if (plugin.single) {
-      Logger.error(`cannot render file templates from single-file plugins`, {
-        plugin: plugin.name,
-      });
-      return this.object({}, { status: 1 });
-    }
-
     try {
-      const result = xmlToData(pugFile(path.join(PLUGIN_PATH, plugin.name, template), data));
+      const result = xmlToData(pugFile(path.join(PLUGIN_PATH, plugin.identifier, template), data));
 
       const keys = Object.keys(result);
       if (keys.length <= 0) return this.object({}, options);
       const rootName = keys[0];
       return this.object(result[rootName], { rootName, ...options });
     } catch (err) {
-      Logger.error(err, { plugin: plugin.name });
+      Logger.error(err, { plugin: plugin.identifier });
       return this.object({}, { status: 1 });
     }
   }

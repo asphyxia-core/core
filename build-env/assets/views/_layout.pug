@@ -7,8 +7,8 @@ mixin li_menu_item(icon, label, link)
       span.menu-item-label #{label}
 
 mixin li_plugin(icon, label, link)
-  li(class=(title == label) ? 'is-active' : '')
-    a.has-icon.has-dropdown-icon(class=(title == label) ? 'is-active' : '' href=link)
+  li(class=(plugin == link) ? 'is-active' : '')
+    a.has-icon.has-dropdown-icon(class=(plugin == link) ? 'is-active' : '' href='/plugin/' + link)
       span.icon
         i.mdi(class='mdi-'+icon)
       span.menu-item-label #{label}
@@ -22,13 +22,15 @@ mixin li_plugin(icon, label, link)
         a(href=link+"?page=profiles" class=(((title == label) && (subtitle == 'Profiles')) ? 'is-active' : ''))
           span Profiles
 
-
 html.has-aside-left.has-aside-mobile-transition.has-navbar-fixed-top.has-aside-expanded
   head
     meta(charset="utf-8")
     meta(http-equiv="X-UA-Compatible", content="ie=edge")
     meta(name="viewport", content="width=device-width, initial-scale=1.0")
     title Asphyxia CORE - #{title}
+      if subtitle
+        | 
+        | &gt; #{subtitle}
     link(rel="stylesheet", href="/static/css/bulma.min.css")
     link(rel="stylesheet", href="/static/css/margin.min.css")
     link(rel="stylesheet", href="/static/css/materialdesignicons.min.css")
@@ -36,8 +38,10 @@ html.has-aside-left.has-aside-mobile-transition.has-navbar-fixed-top.has-aside-e
     link(rel="stylesheet", href="/static/css/bulma-slider.min.css")
     link(rel="stylesheet", href="/static/css/style.css")
     script(type="text/javascript" src="/static/js/axios.min.js")
-    script(type="text/javascript" src="/static/js/bulma-slider.min.js")
-    block styles
+    script(type="text/javascript" src="/static/js/jquery-3.5.1.min.js")
+    script(type="text/javascript" src="/static/js/jdenticon-2.2.0.min.js")
+    script(type="text/javascript" src="/static/js/geopattern.min.js")
+    block head
   body
     #app
       nav.navbar.is-fixed-top.is-info.is-mobile#navbar-main
@@ -59,14 +63,20 @@ html.has-aside-left.has-aside-mobile-transition.has-navbar-fixed-top.has-aside-e
               a.navbar-link.is-arrowless
                 span.icon
                   i.mdi.mdi-menu
-                span Menu
+                span Process
                 span.icon
                   i.mdi.mdi-chevron-down
-              .navbar-dropdown
-                a.navbar-item
+              .navbar-dropdown.is-right
+                if local
+                  a.navbar-item#open-plugins
+                    span.icon
+                      i.mdi.mdi-folder
+                    span Open Plugins Folder
+                  hr.navbar-divider
+                a.navbar-item.has-text-danger#shutdown
                   span.icon
-                    i.mdi.mdi-account
-                  span Subitem
+                    i.mdi.mdi-power
+                  span Shutdown CORE
       aside.aside.is-placed-left.is-expanded
         .aside-tools
           .aside-tools-label
@@ -76,21 +86,30 @@ html.has-aside-left.has-aside-mobile-transition.has-navbar-fixed-top.has-aside-e
           ul.menu-list
             +li_menu_item("desktop-mac", "Dashboard", "/")
             +li_menu_item("account-circle", "Profiles", "/profiles")
+            +li_menu_item("database", "Data Management", "/data")
             +li_menu_item("help-circle", "About", "/about")
           p.menu-label Plugins
           ui.menu-list
             each plugin in plugins
               -
-                var link = plugin.toLowerCase();
+                var link = plugin.id.toLowerCase();
+                var label = plugin.name.toUpperCase();
                 var char = link[0];
-                var label = plugin.toUpperCase();
                 var isAlpha = /[a-z]/.test(char);
                 var isNumeric = /[0-9]/.test(char);
                 var icon = isAlpha ? `alpha-${char}-circle` : (isNumeric ? `numeric-${char}-circle` : 'record-circle');
-              +li_plugin(icon, label, '/plugin/'+link)
+              +li_plugin(icon, label, link)
       .content
         section.hero.is-hero-bar
-          .hero-body.title #{title}
+          .hero-body
+            p.title #{title}
+              if subtitle
+                span.subtitle
+                  | 
+                  span.is-size-6.has-text-grey-light &gt;
+                  | 
+                  span.has-text-grey #{subtitle}
+          
         section.section.is-main-section
           block content
 

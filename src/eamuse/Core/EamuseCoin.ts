@@ -6,7 +6,7 @@ import { EamuseRouteContainer } from '../EamuseRouteContainer';
 export const eacoin = new EamuseRouteContainer();
 
 eacoin.add('eacoin.checkout', async (info, data, send) => {
-  await send.success();
+  send.success();
   return;
 });
 
@@ -20,7 +20,7 @@ eacoin.add('eacoin.checkin', async (info, data, send) => {
   set(result, 'acid', kitem('str', 'DEADC0DEFEEDBEEF'));
   set(result, 'acname', kitem('str', 'DEADC0DEFEEDBEEF'));
 
-  await send.object(result);
+  send.object(result);
   return;
 });
 
@@ -31,6 +31,6 @@ eacoin.add('eacoin.consume', async (info, data, send) => {
   set(result, 'acstatus', kitem('u8', 0));
   set(result, 'balance', kitem('s32', 88410));
 
-  await send.object(result);
+  send.object(result);
   return;
 });

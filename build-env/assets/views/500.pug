@@ -1,0 +1,19 @@
+extends _layout.pug
+
+block content
+  - var style = `background: ${random};` 
+  section.hero.is-dark(style=style)
+    .hero-body
+      .columns
+        .column.is-narrow
+          .image.is-128x128
+            img(src=`data:image/svg+xml;base64,${art}` style="background-color: #ffffffaa")
+        .column
+          h1.title Something went wrong
+          p.subtitle Let me distract you with this random pattern.
+          p.has-text-right.is-size-7 So you don't see the error message
+      
+  section.section
+    .container.has-text-grey
+      p #{err}
+      p.is-size-7 It's just something wrong with the frontend. Probably not a big deal anyway.

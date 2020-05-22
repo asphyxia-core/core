@@ -39,6 +39,10 @@ html.has-aside-mobile-transition nav.navbar {
   min-width: 120px;
 }
 
+.field.is-horizontal.is-narrow div.field-label {
+  min-width: 60px;
+}
+
 .control > .notification {
   padding: 0.5em 1em;
 }
@@ -54,4 +58,233 @@ html.has-aside-mobile-transition nav.navbar {
 
 a.tag.is-dark:hover {
   background-color: black;
+}
+
+.ecard {
+  border-radius: 15px;
+  margin-left: auto;
+  margin-right: auto;
+  border: 1px black;
+  width: 300px;
+  height: 198px;
+  max-width: 300px;
+  max-height: 198px;
+}
+
+.ecard-brand {
+  clip-path: polygon(0% 0%, 0% 100%, 90% 100%, 92% 95%, 94% 90%, 100% 0%);
+  background-color: #0085dd;
+  padding-left: 0.5em;
+  width: 85px;
+  font-size: 0.8em;
+  color: white;
+  font-weight: bold;
+  margin-top: 8px;
+  margin-left: 10px;
+  position: absolute;
+}
+
+.ecard-brand {
+  clip-path: polygon(0% 0%, 0% 100%, 90% 100%, 92% 95%, 94% 90%, 100% 0%);
+  background-color: #0085dd;
+  padding-left: 0.5em;
+  width: 85px;
+  font-size: 0.8em;
+  color: white;
+  font-weight: bold;
+  margin-top: 15px;
+  margin-left: 15px;
+  position: absolute;
+}
+
+.ecard-print {
+  background-color: black;
+  color: white;
+  width: 210px;
+  margin-left: 7px;
+  margin-top: 115px;
+  position: absolute;
+}
+
+.ecard-print .desc {
+  font-size: 0.6em;
+  margin-left: 8px;
+}
+
+.ecard-print .print {
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+  text-align: center;
+}
+
+.ecard-number {
+  background-color: white;
+  color: black;
+  width: 185px;
+  margin-left: 32px;
+  margin-top: 160px;
+  position: absolute;
+}
+
+.ecard-number .desc {
+  font-size: 0.6em;
+  margin-left: 4px;
+  margin-top: 14px;
+  position: absolute;
+  color: red;
+}
+
+.ecard-number .print {
+  text-align: right;
+  margin-right: 4px;
+  margin-top: 2px;
+  margin-bottom: 2px;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.ecard-logo {
+  background: white;
+  border-radius: 70px;
+  background-image: url('/static/img/logo.png');
+  background-size: 70px;
+  position: absolute;
+  margin-top: 117px;
+  margin-left: 222px;
+  width: 70px;
+  height: 70px;
+}
+
+.ecard-delete {
+  position: absolute;
+  margin-top: 10px;
+  margin-left: 250px;
+}
+
+@keyframes byebye {
+  0% {
+    transform: scaleX(1) scaleY(1);
+    opacity: 1;
+    padding-top: 3.25rem;
+  }
+  10% {
+    transform: scaleX(1) scaleY(1);
+    opacity: 1;
+    padding-top: 0;
+  }
+  90% {
+    transform: scaleX(0.9) scaleY(0.9) rotate(8deg);
+    opacity: 0;
+    padding-top: 0;
+  }
+  100% {
+    transform: scaleX(0.9) scaleY(0.9) rotate(8deg);
+    opacity: 0;
+    padding-top: 0;
+  }
+}
+
+@keyframes navbyebye {
+  0% {
+    transform: translateY(0);
+  }
+  10% {
+    transform: translateY(-100%);
+  }
+  90% {
+    transform: rotate(10deg) translateY(-85%) translateX(10%);
+  }
+  100% {
+    transform: rotate(10deg) translateY(-85%) translateX(10%);
+  }
+}
+
+@keyframes asidebyebye {
+  0% {
+    transform: translateY(0) translateX(0);
+  }
+  10% {
+    transform: translateY(0) translateX(0);
+  }
+  90% {
+    transform: rotate(-10deg) translateY(30px) translateX(-10px);
+  }
+  100% {
+    transform: rotate(-10deg) translateY(30px) translateX(-10px);
+  }
+}
+
+@keyframes iconbyebye {
+  0% {
+    transform: rotate(0) translateY(0) translateX(0) scale(1);
+  }
+  10% {
+    transform: rotate(0) translateY(0) translateX(0) scale(1);
+  }
+  90% {
+    transform: rotate(-129deg) translateY(10px) translateX(-8px) scale(2);
+  }
+  100% {
+    transform: rotate(-129deg) translateY(10px) translateX(-8px) scale(2);
+  }
+}
+
+@keyframes turnoff {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.gobyebye {
+  opacity: 1;
+  animation-name: byebye;
+  animation-duration: 3s;
+  animation-timing-function: ease-out;
+  transform-origin: center center;
+  padding-top: 0;
+  overflow: hidden;
+}
+
+.gobyebye .is-overlay.turnoff {
+  z-index: 10000;
+  background-color: #2a2a2e;
+  animation-name: turnoff;
+  animation-duration: 3s;
+  animation-timing-function: ease-out;
+  transform-origin: top right;
+  color: #fc9834;
+  vertical-align: middle;
+  font-size: 10vh;
+  font-family: sans-serif, 'Helvetica Neue', 'Lucida Grande', Arial;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.is-overlay.turnoff::after {
+  content: "It's now safe to close\Athis webpage";
+  white-space: pre;
+}
+
+.gobyebye nav {
+  animation-name: navbyebye;
+  animation-duration: 3s;
+  animation-timing-function: ease-out;
+  transform-origin: top right;
+}
+
+.gobyebye aside {
+  animation-name: asidebyebye;
+  animation-duration: 3s;
+  animation-timing-function: ease-out;
+  transform-origin: bottom left;
+}
+
+.gobyebye .icon {
+  animation-name: iconbyebye;
+  animation-duration: 3s;
+  animation-timing-function: ease-out;
 }

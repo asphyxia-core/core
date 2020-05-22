@@ -56,6 +56,10 @@ mixin form(name, options)
           +form_control(option)
         .field.is-grouped
           .control.is-expanded
-            .notification.is-danger.is-light(class=formMessage && formMessage.length ? '' : 'is-hidden') #{formMessage}
+            if formMessage
+              if formMessage.danger
+                .notification.is-danger.is-light #{formMessage.message}
+              else
+                .notification.is-success.is-light #{formMessage.message}
           .control
             button.button.is-link(type='submit') Apply

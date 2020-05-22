@@ -2,7 +2,7 @@ import { xmlToData, dataToXML, kencode, kitem, kdecode, kattr, karray } from './
 import { KonmaiEncrypt } from './utils/KonmaiEncrypt';
 import iconv from 'iconv-lite';
 import { writeFileSync, readFileSync, write } from 'fs';
-import { ReadConfig, SaveConfig } from './utils/ArgConfig';
+import { ReadConfig, SaveConfig, ARGS } from './utils/ArgConfig';
 import { renderFile as pugFile } from 'pug';
 
 // const data = readFileSync('response.bin');
@@ -38,5 +38,5 @@ import { renderFile as pugFile } from 'pug';
 // ReadConfig();
 // SaveConfig();
 
-const data = xmlToData(pugFile('build\\plugins\\sdvx\\template\\common4.pug'));
-console.log(data);
+// const data = xmlToData(pugFile('build\\plugins\\sdvx\\template\\common4.pug'));
+// console.log(data);

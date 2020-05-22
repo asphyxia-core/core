@@ -70,7 +70,7 @@ export const services = (url: string, plugins: EamusePlugin[]) => {
       services.item.push({ '@attr': { name: moduleName, url } });
     }
 
-    await send.object(services);
+    send.object(services);
     return;
   });
 

@@ -116,23 +116,29 @@ function CoreConfig() {
   });
 
   CONFIG_MAP['core'].set('allow_register', {
-    // TODO: use this
     type: 'boolean',
     default: true,
     desc: 'Allow registering new profile.',
   });
 
   CONFIG_MAP['core'].set('maintenance_mode', {
-    // TODO: use this
     type: 'boolean',
     default: false,
   });
 
   CONFIG_MAP['core'].set('enable_paseli', {
-    // TODO: use this
     type: 'boolean',
     default: true,
   });
+
+  if (process.platform == 'win32') {
+    CONFIG_MAP['core'].set('webui_on_startup', {
+      name: 'WebUI on startup',
+      type: 'boolean',
+      default: true,
+      desc: 'Open WebUI when you launch Asphyxia CORE',
+    });
+  }
 }
 CoreConfig();
 
@@ -145,27 +151,27 @@ export function PluginRegisterConfig(key: string, options: CONFIG_OPTIONS) {
 
   if (!options) {
     Logger.error(`failed to register config entry ${key}: config options not specified`, {
-      plugin: plugin.name,
+      plugin: plugin.identifier,
     });
   }
 
-  if (!options.default) {
+  if (options.default == null) {
     Logger.error(`failed to register config entry ${key}: default value not specified`, {
-      plugin: plugin.name,
+      plugin: plugin.identifier,
     });
   }
 
-  if (!options.type) {
+  if (!options.type == null) {
     Logger.error(`failed to register config entry ${key}: value type not specified`, {
-      plugin: plugin.name,
+      plugin: plugin.identifier,
     });
   }
 
-  if (!CONFIG_MAP[plugin.name]) {
-    CONFIG_MAP[plugin.name] = new Map();
+  if (!CONFIG_MAP[plugin.identifier]) {
+    CONFIG_MAP[plugin.identifier] = new Map();
   }
 
-  CONFIG_MAP[plugin.name].set(key, options);
+  CONFIG_MAP[plugin.identifier].set(key, options);
 }
 
 export function ReadConfig() {

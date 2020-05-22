@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "pug": "^2.0.4",
+    "systray": "^1.0.5",
     "ts-node": "^8.10.1"
   }
 }

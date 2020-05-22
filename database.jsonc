@@ -1,0 +1,28 @@
+// Database Design
+{
+  "counter": {
+    "__reserved_field": "counter",
+    "value": "number" // Counter
+  },
+
+  "cards": {
+    "__reserved_field": "card",
+    "__refid": "string",
+    "cid": "string", // CARD NFC ID
+    "print": "string" // CARD PRINT NUMBER
+  },
+
+  "profiles": {
+    "__reserved_field": "profile",
+    "__refid": "string", //refid
+    "pin": "string", // password
+    "models": [] // gamecodes
+  },
+
+  "plugins": {
+    "__reserved_field": "plugins",
+    "__affiliation": "string", // Plugin Name
+    "__collection": "string", // Doc collection
+    "__refid": "string"
+  }
+}

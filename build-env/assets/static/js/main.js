@@ -50,3 +50,35 @@ Array.from(document.getElementsByClassName('jb-notification-dismiss')).forEach(e
     e.currentTarget.closest('.notification').classList.add('is-hidden');
   });
 });
+
+(() => {
+  var audioElement;
+  $(document).ready(() => {
+    audioElement = document.createElement('audio');
+    audioElement.setAttribute('src', '/static/seeya.mp3');
+    audioElement.volume = 0.3;
+  });
+
+  $('#shutdown').on('click', () => {
+    $('html').addClass('gobyebye');
+    $('body').append('<div class="is-overlay turnoff"></div>');
+    audioElement.play();
+    window.scrollTo(0, 0);
+    axios.get('/fun/shutdown');
+  });
+
+  $('#open-plugins').on('click', () => {
+    axios.get('/fun/open-plugins');
+  });
+
+  $('[jdenticon]').each(function (i, obj) {
+    var str = $(this).attr('jdenticon');
+    var size = $(this).attr('jdenticon-size');
+    $(this).html(jdenticon.toSvg(str, parseInt(size)));
+  });
+
+  $('[geopattern]').each(function (i, obj) {
+    var str = $(this).attr('geopattern');
+    $(this).css({ background: GeoPattern.generate(str).toDataUrl() });
+  });
+})();

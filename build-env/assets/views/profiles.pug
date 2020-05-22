@@ -1,0 +1,68 @@
+extends _layout.pug
+
+block content
+  - var dateformat = { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' };
+
+  .card.has-table
+    header.card-header
+      p.card-header-title
+        span.icon
+          i.mdi.mdi-account-multiple
+        | Profiles
+        a(href="javascript:window.location.reload(true)" data-tooltip='Refresh')
+          span.icon
+            i.mdi.mdi-reload
+    .card-content
+      if profiles.length > 0
+        .table-container
+          table.table.is-fullwidth.is-striped.is-hoverable
+            thead
+              tr.is-size-5
+                th
+                th Name
+                th.is-hidden-mobile ID
+                th Cards
+                th
+            tbody
+              each profile, index in profiles
+                tr.is-size-5
+                  td.is-image-cell
+                    .image.is-32x32(jdenticon=profile.name jdenticon-size='32')
+                  td #{profile.name}
+                  td.is-hidden-mobile #{profile.refid}
+                  td #{profile.cards}
+                  td
+                    .buttons.is-right.are-small
+                      a.button.is-primary(href=`/profile/${profile.refid}`)
+                        span.icon
+                          i.mdi.mdi-account-edit.mdi-18px
+                      a.button.is-danger.jb-modal.profile-delete(data-target="confirm-modal" deleting=profile.refid deleting-name=profile.name)
+                        span.icon
+                          i.mdi.mdi-trash-can.mdi-18px
+      else
+        section.section
+          .content.has-text-grey.has-text-centered
+            p
+              span.icon.is-large
+                i.mdi.mdi-emoticon-happy.mdi-48px
+            p Nothing's here yet. Let's play!
+  
+  .modal#confirm-modal
+    .modal-background.jb-modal-close
+    .modal-card
+      header.modal-card-head
+        span.icon.has-text-danger
+          i.mdi.mdi-alert.mdi-18px
+        p.modal-card-title.has-text-weight-semibold#confirm-modal-title Deleting
+      section.modal-card-body
+        p
+          b Are you sure?
+        p Deleting the profile will delete all game data associated with this profile (including scores).
+        p You will not be able to undo this action.
+      footer.modal-card-foot
+        button.button.jb-modal-close Cancel
+        button.button.is-danger#confirm-delete Delete
+    button.modal-close.is-large.jb-modal-close
+
+block scripts
+  script(type="text/javascript" src="/static/js/profiles.js")

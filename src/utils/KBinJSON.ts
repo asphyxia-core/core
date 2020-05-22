@@ -6,7 +6,6 @@ import { toSafeInteger, isArrayLike, get, isArray, isEmpty, toString, isNil } fr
 import json2xml = xml2json.j2xParser;
 
 import { BinaryLengthType, ReadBuffer, WriteBuffer } from './AutoBuffer';
-import { SAFEHEX } from './Consts';
 
 export type KAttrMap = { [key: string]: string };
 export type KNumberType =

@@ -1,11 +1,12 @@
 import { EamuseRouteContainer } from '../EamuseRouteContainer';
+import { CONFIG } from '../../utils/ArgConfig';
 
 export const pcbtracker = new EamuseRouteContainer();
 
 pcbtracker.add('pcbtracker.alive', async (info, data, send) => {
   const result = {
     '@attr': {
-      ecenable: 1,
+      ecenable: CONFIG.enable_paseli ? 1 : 0,
       eclimit: 0,
       expire: 1200,
       limit: 0,
@@ -13,5 +14,5 @@ pcbtracker.add('pcbtracker.alive', async (info, data, send) => {
     },
   };
 
-  await send.object(result);
+  send.object(result);
 });

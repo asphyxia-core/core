@@ -1,68 +1,59 @@
 import { EamuseRouteContainer } from '../EamuseRouteContainer';
-import { padStart, get, toSafeInteger, toString } from 'lodash';
-import { Logger } from '../../utils/Logger';
-import { SAFEHEX } from '../../utils/Consts';
+import { get } from 'lodash';
+import {
+  FindCard,
+  GetProfileCount,
+  FindProfile,
+  CreateProfile,
+  BindProfile,
+  DeleteCard,
+  CreateCard,
+  UpdateProfile,
+} from '../../utils/EamuseIO';
 
 export const cardmng = new EamuseRouteContainer();
 
-const ProfileCheck: {
-  [key: string]: () => boolean;
-} = {};
-
-const PROFILE_QUEUE = Array(1024).fill(-1);
-let PROFILE_QUEUE_INDEX = 0;
-
-function toRefID(id: number) {
-  return SAFEHEX + padStart(id.toString(16).toUpperCase(), 8, '0');
-}
-
-function toQueueIndex(ref: string) {
-  if (ref == null) return -1;
-  const result = parseInt(ref.substr(8), 16);
-  if (isNaN(result)) {
-    return -1;
-  } else {
-    return result;
-  }
-}
-
-export function getProfileFromRef(ref: string) {
-  const index = toQueueIndex(ref);
-  if (index < 0 || index >= 1024) return null;
-  if (PROFILE_QUEUE[index] < 0) return null;
-  return padStart(PROFILE_QUEUE[index].toString(), 4, '0');
-}
-
-export function AddProfileCheck(gameCode: string, handler: () => boolean): boolean {
-  if (!ProfileCheck[gameCode]) {
-    ProfileCheck[gameCode] = handler;
-    return true;
-  } else {
-    return false;
-  }
-}
-
-export function RemoveProfileCheck(gameCode: string) {
-  delete ProfileCheck[gameCode];
-}
+// const CARD_CACHE: {
+//   [cid: string]: string;
+// } = {};
 
 cardmng.add('cardmng.inquire', async (info, data, send) => {
-  const model: string = info.model;
-  const modelCode = model.split(':')[0] || 'NUL';
+  const cid: string = get(data, '@attr.cardid');
 
-  const refid = toRefID(PROFILE_QUEUE_INDEX++);
-  if (PROFILE_QUEUE_INDEX >= 1024) {
-    PROFILE_QUEUE_INDEX = 0;
+  // let refid = CARD_CACHE[cid];
+
+  const card = await FindCard(cid);
+
+  if (!card) {
+    const profileCount = await GetProfileCount();
+    if (profileCount < 0 || profileCount >= 16) {
+      // Refuse to create new account
+      return send.status(110);
+    }
+
+    // Create new account
+    return send.status(112);
   }
 
-  await send.object({
+  const profile = await FindProfile(card.refid);
+  if (!profile) {
+    await DeleteCard(cid);
+    return send.status(112);
+  }
+
+  if (profile.pin === 'unset') {
+    // need update pin
+    return send.status(112);
+  }
+
+  send.object({
     '@attr': {
-      binded: (ProfileCheck[modelCode] || (() => false))() ? 1 : 0, // Has profile in game
-      dataid: refid, // Player.dataID
-      ecflag: 1, // Is currency card
-      expired: 0, // Is expired, if true will treat as new card
+      binded: profile.models.indexOf(info.gameCode) >= 0,
+      dataid: card.refid,
+      ecflag: 1,
+      expired: 0,
       newflag: 0,
-      refid: refid, // Player.dataID as well
+      refid: card.refid,
     },
   });
 
@@ -70,28 +61,60 @@ cardmng.add('cardmng.inquire', async (info, data, send) => {
 });
 
 cardmng.add('cardmng.getrefid', async (info, data, send) => {
-  const refid = toRefID(PROFILE_QUEUE_INDEX++);
-  if (PROFILE_QUEUE_INDEX >= 1024) {
-    PROFILE_QUEUE_INDEX = 0;
+  const cid: string = get(data, '@attr.cardid');
+  const pin: string = get(data, '@attr.passwd');
+
+  const card = await FindCard(cid);
+  if (card) {
+    // Card exists, update profile pin
+    const updated = await UpdateProfile(card.refid, { pin }, true);
+    if (updated) {
+      await BindProfile(card.refid, info.gameCode);
+      return send.object({ '@attr': { dataid: card.refid, refid: card.refid } });
+    } else {
+      return send.deny();
+    }
   }
 
-  await send.object({ '@attr': { dataid: refid, refid: refid } });
+  const newProfile = await CreateProfile(pin, info.gameCode);
+  if (!newProfile) {
+    // Creation Failed
+    return send.deny();
+  }
+
+  const refid = newProfile.refid;
+
+  const newCard = await CreateCard(cid, refid);
+  if (!newCard) {
+    // Creation Failed
+    return send.deny();
+  }
+
+  send.object({ '@attr': { dataid: refid, refid } });
   return;
 });
 
 cardmng.add('cardmng.authpass', async (info, data, send) => {
-  const refid = toQueueIndex(get(data, '@attr.refid', null));
-  const pass = toSafeInteger(get(data, '@attr.pass', '0000'));
+  const refid = get(data, '@attr.refid', null);
+  const pass = get(data, '@attr.pass', '-1');
 
-  if (refid >= 0) {
-    PROFILE_QUEUE[refid] = pass;
+  const profile = await FindProfile(refid);
+
+  if (!profile) {
+    return send.status(110);
   }
-  Logger.debug(`profile mapped: ${refid} -> ${pass}`);
+
+  if (profile.pin !== pass) {
+    return send.status(116);
+  }
+
   // Right password
-  await send.success();
+  send.success();
 });
 
 cardmng.add('cardmng.bindmodel', async (info, data, send) => {
   const refid = get(data, '@attr.refid', 'DEADC0DEFEEDBEEF');
-  await send.object({ '@attr': { dataid: refid } });
+
+  await BindProfile(refid, info.gameCode);
+  send.object({ '@attr': { dataid: refid } });
 });

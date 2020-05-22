@@ -55,9 +55,7 @@ export class KonmaiEncrypt {
       randomFillSync(this.konmaiKey, 0, 6);
     }
 
-    this.realKey = createHash('md5')
-      .update(this.konmaiKey)
-      .digest();
+    this.realKey = createHash('md5').update(this.konmaiKey).digest();
   }
 
   public getPublicKey(): string {

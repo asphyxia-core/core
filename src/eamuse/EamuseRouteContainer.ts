@@ -32,24 +32,24 @@ export class EamuseRouteContainer {
     }
   }
 
-  public run(
+  public async run(
     moduleName: string,
     method: string,
     info: EamuseInfo,
     data: any,
     send: EamuseSend
-  ): boolean {
+  ): Promise<boolean> {
     let handler = this.routes[`${moduleName}.${method}`];
     if (isNil(handler)) {
       return false;
     }
 
     if (typeof handler === 'boolean') {
-      handler ? send.success() : send.deny();
+      handler ? await send.success() : await send.deny();
       return true;
     }
 
-    handler(info, data, send);
+    await handler(info, data, send);
     return true;
   }
 }
