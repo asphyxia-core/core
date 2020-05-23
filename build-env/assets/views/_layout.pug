@@ -19,8 +19,8 @@ mixin li_plugin(icon, label, link)
           i.mdi.mdi-minus
     ul
       li
-        a(href=link+"?page=profiles" class=(((title == label) && (subtitle == 'Profiles')) ? 'is-active' : ''))
-          span Profiles
+        a(href=link class=(((title == label) && (subtitle == 'Overview')) ? 'is-active' : ''))
+          span Overview
 
 html.has-aside-left.has-aside-mobile-transition.has-navbar-fixed-top.has-aside-expanded
   head

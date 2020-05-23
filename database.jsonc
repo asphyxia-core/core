@@ -19,7 +19,13 @@
     "models": [] // gamecodes
   },
 
-  "plugins": {
+  "plugins_global": {
+    "__reserved_field": "plugins",
+    "__affiliation": "string", // Plugin Name
+    "__collection": "string" // Doc collection
+  },
+
+  "plugins_profile": {
     "__reserved_field": "plugins",
     "__affiliation": "string", // Plugin Name
     "__collection": "string", // Doc collection

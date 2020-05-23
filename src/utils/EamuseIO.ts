@@ -348,3 +348,101 @@ export async function GetProfiles() {
       });
   });
 }
+
+// Public API
+function CheckQuery(query: any) {
+  for (const key in query) {
+    if (key.startsWith('__')) {
+      throw new Error('query field can not starts with "__"');
+    }
+
+    if (typeof query[key] == 'object') {
+      CheckQuery(query[key]);
+    }
+  }
+}
+
+export async function APIFindOne(plugin: string, refid: string | null, query: any) {
+  CheckQuery(query);
+  const sanitized = { ...query };
+
+  if (sanitized.owner) {
+    sanitized.__refid = sanitized.owner;
+    delete sanitized.owner;
+  }
+
+  return new Promise<any>((resolve, reject) => {
+    DB.findOne(
+      {
+        ...query,
+        __reserved_field: 'plugins',
+        __affiliation: plugin,
+        __refid: owner,
+      },
+      {
+        __reserved_field: 0,
+        __affiliation: 0,
+        __collection: 0,
+        __refid: 0,
+      },
+      (err, doc) => {
+        if (err) reject(err);
+        else resolve(doc);
+      }
+    );
+  });
+}
+
+export async function APIFind(
+  plugin: string,
+  owner: string = 'global',
+  key: string = 'default',
+  query: any = {},
+  sort: any = { createdAt: 1 }
+) {
+  CheckQuery(query);
+  return new Promise<any>((resolve, reject) => {
+    DB.find(
+      {
+        ...query,
+        __reserved_field: 'plugins',
+        __affiliation: plugin,
+        __collection: key,
+        __refid: owner,
+      },
+      {
+        __reserved_field: 0,
+        __affiliation: 0,
+        __collection: 0,
+        __refid: 0,
+      }
+    )
+      .sort(sort)
+      .exec((err, doc) => {
+        if (err) reject(err);
+        else resolve(doc);
+      });
+  });
+}
+
+export async function APIUpdate(plugin: string, key: string, query: any) {
+  CheckQuery(query);
+  return new Promise<any>((resolve, reject) => {
+    DB.find({
+      ...query,
+      __reserved_field: 'plugins',
+      __affiliation: plugin,
+      __collection: key,
+    })
+      .projection({
+        __reserved_field: 0,
+        __affiliation: 0,
+        __collection: 0,
+      })
+      .sort({ createdAt: 1 })
+      .exec((err, doc) => {
+        if (err) reject(err);
+        else resolve(doc);
+      });
+  });
+}

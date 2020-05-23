@@ -307,7 +307,14 @@ webui.get(
     const name = pluginName.split('@')[0].toUpperCase();
     res.render(
       'plugin',
-      data(req, name, { plugin: pluginName, readme, config, contributors, gameCodes })
+      data(req, name, {
+        plugin: pluginName,
+        readme,
+        config,
+        contributors,
+        gameCodes,
+        subtitle: 'Overview',
+      })
     );
   })
 );

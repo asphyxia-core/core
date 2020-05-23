@@ -17,6 +17,7 @@
     "@types/node-notifier": "^6.0.1",
     "@types/pug": "^2.0.4",
     "@types/showdown": "^1.9.3",
+    "@types/sizeof": "^1.0.1",
     "prettier": "^2.0.5",
     "typedoc": "^0.17.6",
     "typescript": "^3.8.3"
@@ -44,6 +45,7 @@
     "pkg": "^4.4.8",
     "pug": "^2.0.4",
     "showdown": "^1.9.1",
+    "sizeof": "^1.0.0",
     "ts-node": "^8.10.1",
     "winston": "^3.2.1"
   }

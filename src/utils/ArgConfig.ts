@@ -192,7 +192,7 @@ export function ReadConfig() {
     }
 
     for (const [key, option] of CONFIG_MAP[mod]) {
-      if (!section[key]) {
+      if (section[key] == null) {
         section[key] = option.default;
       } else {
         if (option.type == 'boolean') {
