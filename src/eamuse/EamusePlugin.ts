@@ -252,6 +252,11 @@ export class EamusePlugin {
       },
     };
 
+    const IO = {},
+      $ = {},
+      R = {},
+      K = {};
+
     const local: any = { refid };
     for (const prop in cache.props) {
       local[prop] = await eval(cache.props[prop]);

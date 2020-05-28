@@ -45,9 +45,9 @@ const tsconfig = path.join(PLUGIN_PATH, 'tsconfig.json');
 const ts_node = require('ts-node');
 if (existsSync(tsconfig)) {
   /* Inject ts-node */
-  ts_node.register({ project: tsconfig });
+  ts_node.register({ project: tsconfig, transpileOnly: ARGS.dev ? false : true });
 } else {
-  ts_node.register();
+  ts_node.register({ transpileOnly: ARGS.dev ? false : true });
 }
 
 $.$ = (data: any) => {

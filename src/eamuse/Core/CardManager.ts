@@ -16,12 +16,10 @@ import {
 export const cardmng = new EamuseRouteContainer();
 
 async function CheckProfile(gameCode: string, refid: string) {
-  const plugins = ROOT_CONTAINER.getPluginByCode(gameCode);
-  for (const plugin of plugins) {
-    const profile = await APIFindOne({ name: plugin.Identifier, core: true }, refid, {});
-    if (profile != null) {
-      return true;
-    }
+  const plugin = ROOT_CONTAINER.getPluginByCode(gameCode);
+  const profile = await APIFindOne({ name: plugin.Identifier, core: true }, refid, {});
+  if (profile != null) {
+    return true;
   }
   return false;
 }
