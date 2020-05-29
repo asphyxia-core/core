@@ -1,3 +1,8 @@
+## v1.14 beta
+
+- **WebUI** Deleting any data now requires an additional step to prevent accidental deletion.
+- **WebUI** You can now delete plugins' data in the "Data Management" page.
+
 ## v1.13 beta
 
 - **PluginLoader**: Now a gamecode can not be registered by multiple plugins

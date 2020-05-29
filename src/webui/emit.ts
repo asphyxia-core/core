@@ -16,7 +16,7 @@ emit.post('/:event', urlencoded({ extended: true }), json(), async (req, res) =>
     return;
   }
 
-  const plugin = ROOT_CONTAINER.getPluginByName(match[1]);
+  const plugin = ROOT_CONTAINER.getPluginByID(match[1]);
   if (!plugin) {
     res.sendStatus(404);
     return;

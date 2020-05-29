@@ -299,7 +299,7 @@ a.tag.is-dark:hover {
 
 #confirm-delete {
   transition-property: width, border-radius;
-  transition-duration: 0.5s;
+  transition-duration: 0.3s;
   width: 83.8px;
 }
 
@@ -310,7 +310,7 @@ a.tag.is-dark:hover {
 
 #confirm-delete :nth-child(1) {
   transition-property: opacity;
-  transition-delay: 0.5s;
+  transition-delay: 0.3s;
   transition-duration: 0.5s;
   opacity: 1;
 }
@@ -333,6 +333,6 @@ a.tag.is-dark:hover {
 }
 
 #confirm-delete.is-deleting :nth-child(2) {
-  transition-delay: 0.5s;
+  transition-delay: 0.3s;
   opacity: 1;
 }

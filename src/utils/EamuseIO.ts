@@ -271,6 +271,21 @@ export async function PluginStats() {
   });
 }
 
+export async function PurgePlugin(affiliation: string) {
+  return new Promise<boolean>(resolve => {
+    DB.remove(
+      {
+        __affiliation: affiliation,
+      },
+      { multi: true },
+      (err, res) => {
+        if (err) resolve(false);
+        else resolve(true);
+      }
+    );
+  });
+}
+
 export async function Count(doc: any) {
   return new Promise<number>(resolve => {
     DB.count(doc, (err, n) => {

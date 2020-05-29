@@ -103,7 +103,10 @@ export class EamusePlugin {
     };
   };
 
-  constructor(folderName: string) {
+  private instance: any;
+
+  constructor(folderName: string, instance: any) {
+    this.instance = instance;
     this.pluginName = folderName.split('@')[0].toUpperCase();
     this.pluginIdentifier = folderName;
     this.gameCodes = [];
@@ -136,6 +139,10 @@ export class EamusePlugin {
         .sort();
       this.CompilePages();
     } catch {}
+  }
+
+  public Register() {
+    this.instance.register();
   }
 
   private ExpressionCheck(isProfile: boolean, expression: string) {

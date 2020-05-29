@@ -24,6 +24,7 @@ import {
   APIFind,
   APIRemove,
   PluginStats,
+  PurgePlugin,
 } from '../utils/EamuseIO';
 import { urlencoded, json } from 'body-parser';
 import humanize from 'humanize-string';
@@ -34,6 +35,7 @@ import { card2nfc, nfc2card, cardType } from '../utils/CardCipher';
 import { groupBy } from 'lodash';
 import { sizeof } from 'sizeof';
 import { emit } from './emit';
+import { Logger } from '../utils/Logger';
 
 const memorystore = createMemoryStore(session);
 
@@ -271,19 +273,32 @@ webui.post(
   })
 );
 
+// Data Management
 webui.get(
   '/data',
   wrap(async (req, res) => {
-    const contributors = new Map<string, { name: string; link?: string }>();
-    for (const plugin of ROOT_CONTAINER.Plugins) {
-      for (const c of plugin.Contributors) {
-        contributors.set(c.name, c);
+    const pluginStats = await PluginStats();
+    const installed = ROOT_CONTAINER.Plugins.map(p => p.Identifier);
+    res.render('data', data(req, 'Data Management', 'core', { pluginStats, installed }));
+  })
+);
+
+webui.delete(
+  '/data/:plugin',
+  wrap(async (req, res) => {
+    const plugin = req.params['plugin'];
+    if (plugin && plugin.length > 0) await PurgePlugin(plugin);
+
+    const instance = ROOT_CONTAINER.getPluginByID(plugin);
+    if (instance) {
+      // Re-register for init data
+      try {
+        instance.Register();
+      } catch (err) {
+        Logger.error(err, { plugin });
       }
     }
-
-    const pluginStats = await PluginStats();
-
-    res.render('data', data(req, 'Data Management', 'core', { pluginStats }));
+    res.sendStatus(200);
   })
 );
 
@@ -307,7 +322,7 @@ webui.get(
 webui.get(
   '/plugin/:plugin',
   wrap(async (req, res, next) => {
-    const plugin = ROOT_CONTAINER.getPluginByName(req.params['plugin']);
+    const plugin = ROOT_CONTAINER.getPluginByID(req.params['plugin']);
 
     if (!plugin) {
       return next();
@@ -344,7 +359,7 @@ webui.get(
 webui.delete(
   '/plugin/:plugin/profile/:refid',
   wrap(async (req, res) => {
-    const plugin = ROOT_CONTAINER.getPluginByName(req.params['plugin']);
+    const plugin = ROOT_CONTAINER.getPluginByID(req.params['plugin']);
 
     if (!plugin) {
       return res.sendStatus(404);
@@ -373,7 +388,7 @@ webui.get(
       return next();
     }
 
-    const plugin = ROOT_CONTAINER.getPluginByName(req.params['plugin']);
+    const plugin = ROOT_CONTAINER.getPluginByID(req.params['plugin']);
 
     if (!plugin) {
       return next();
@@ -393,7 +408,7 @@ webui.get(
 webui.get(
   '/plugin/:plugin/profiles',
   wrap(async (req, res, next) => {
-    const plugin = ROOT_CONTAINER.getPluginByName(req.params['plugin']);
+    const plugin = ROOT_CONTAINER.getPluginByID(req.params['plugin']);
 
     if (!plugin) {
       return next();
@@ -438,7 +453,7 @@ webui.get(
 webui.get(
   '/plugin/:plugin/profile',
   wrap(async (req, res, next) => {
-    const plugin = ROOT_CONTAINER.getPluginByName(req.params['plugin']);
+    const plugin = ROOT_CONTAINER.getPluginByID(req.params['plugin']);
 
     if (!plugin) {
       return next();
@@ -485,7 +500,7 @@ webui.get(
 webui.get(
   '/plugin/:plugin/:page',
   wrap(async (req, res, next) => {
-    const plugin = ROOT_CONTAINER.getPluginByName(req.params['plugin']);
+    const plugin = ROOT_CONTAINER.getPluginByID(req.params['plugin']);
 
     if (!plugin) {
       return next();

@@ -264,10 +264,10 @@ export function LoadExternalPlugins() {
     }
 
     for (const { instance, name } of instances) {
-      const plugin = new EamusePlugin(name);
+      const plugin = new EamusePlugin(name, instance);
       EnableRegisterNamespace(plugin);
       try {
-        instance.register();
+        plugin.Register();
         loaded.push(plugin);
       } catch (err) {
         Logger.error(`failed during register()`, { plugin: name });
