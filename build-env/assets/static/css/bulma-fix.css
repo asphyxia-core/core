@@ -81,7 +81,7 @@
     background-color: #282c33;
   }
 }
-@media screen and (max-width: 1023px) {
+@media screen and (max-width: 1023px) and (prefers-color-scheme: dark) {
   nav.navbar .navbar-menu .navbar-item.has-dropdown > .navbar-link {
     background-color: #343434;
   }

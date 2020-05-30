@@ -44,7 +44,7 @@
   let __auto_starts = 0;
 
   $('#shell-command').on('keydown', async e => {
-    if (e.code == 'Enter') {
+    if (e.code == 'Enter' || e.keyCode == 13) {
       e.preventDefault();
       __history_cur = 0;
       const command = $('#shell-command').val();
@@ -181,9 +181,6 @@
       '(': ')',
       '{': '}',
       '[': ']',
-      '"': '"',
-      "'": "'",
-      '`': '`',
     };
 
     if (input[end - 1] in fillRight) {

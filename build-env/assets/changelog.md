@@ -1,6 +1,12 @@
+## v1.16 beta
+
+- **API**: Now `$()` throws error if a non-plain-object is passed in as data
+- **API**: `$.ELEMENTS` and `$().elements` now always return valid arrays
+- **API**: DB queries now ignore `__refid` fields instead of throwing errors
+
 ## v1.15 beta
 
-- **PluginLoader**: Lodash (\_) is now exposed as API.
+- **PluginLoader**: Lodash (`\_`) is now exposed as API.
 - **WebUI**: Added a query shell for plugins. You need to enable developer mode to use it
 - **WebUI**: Added a dark mode which follows system's color preference
 

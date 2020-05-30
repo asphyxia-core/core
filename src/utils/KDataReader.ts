@@ -51,7 +51,7 @@ export class KDataReader {
 
   elements(path: string): KDataReader[] {
     const ele = getElements(this.obj, path);
-    if (isNil(ele)) return null;
+    if (isNil(ele)) return [];
     return ele.map(e => new KDataReader(e));
   }
 

@@ -1102,10 +1102,7 @@ export const getElement = (data: any, path: string): any => {
 
 export const getElements = (data: any, path: string): any[] => {
   const item: any = get(data, `${path}`);
-  if (isNil(item)) return item;
-  if (isEmpty(item)) {
-    return [];
-  }
+  if (isNil(item)) return [];
   if (isArray(item)) {
     return item;
   } else {
