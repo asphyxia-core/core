@@ -31,7 +31,7 @@
 
   function clear() {
     $('#shell-content').html('');
-    return null;
+    return { __cleared: true };
   }
 
   Object.freeze(DB);
@@ -67,7 +67,7 @@
         result = { error: err.toString() };
       }
 
-      if (result !== null && result !== DB) {
+      if (result !== DB && (result == null || !result.__cleared)) {
         $('#shell-content').append(
           `<code class="language-json hljs">${
             hljs.highlight('json', `/* ${command} */\n${JSON.stringify(result, null, 2)}`).value

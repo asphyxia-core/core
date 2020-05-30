@@ -12,7 +12,7 @@ fun.get('/open-plugins', async (req, res) => {
 });
 
 fun.get('/ping', async (req, res) => {
-  res.send('pong');
+  res.json('pong');
 });
 
 fun.get('/shutdown', async (req, res) => {

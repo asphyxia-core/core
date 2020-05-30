@@ -4,6 +4,7 @@ import iconv from 'iconv-lite';
 import { writeFileSync, readFileSync, write } from 'fs';
 import { ReadConfig, SaveConfig, ARGS } from './utils/ArgConfig';
 import { renderFile as pugFile } from 'pug';
+import { KDataReader } from './utils/KDataReader';
 
 // const data = readFileSync('response.bin');
 // const decode = kdecode(data);
@@ -17,22 +18,28 @@ import { renderFile as pugFile } from 'pug';
 // const key = new KonmaiEncrypt('1-5ebc47ba-9868');
 // writeFileSync(`${key.getPublicKey()}.bin`, key.encrypt(request));
 
-// const data = kattr(
-//   {
-//     test: '"',
-//     test2: '&',
-//   },
-//   {
-//     child: kitem('s32', 5),
-//     child2: kitem('ip4', '192.168.1.1'),
-//     group: [kitem('s64', BigInt(1000)), kitem('bin', Buffer.from('HAHA'))],
-//     group2: [karray('s64', [BigInt(1000), BigInt(1000)]), kitem('2s32', [32, 32])],
-//     test: kitem('str', 'This is a string'),
-//   }
-// );
+const data = kattr(
+  {
+    test: '"',
+    test2: '&',
+  },
+  {
+    child: karray('s32', [100, 100, 200, 200]),
+    child2: kitem('ip4', '192.168.1.1'),
+    group: [kitem('s64', BigInt(1000)), kitem('bin', Buffer.from('HAHA'))],
+    group2: [karray('s64', [BigInt(1000), BigInt(1000)]), kitem('2s32', [32, 32])],
+    test: kitem('str', 'This is a string'),
+  }
+);
 
-// const data2 = dataToXML({ data });
-// console.log(data2);
+const encoded = kencode({ data });
+const decoded = kdecode(encoded);
+
+const a = new KDataReader(decoded);
+console.log(a.numbers('data.child'));
+
+const data2 = dataToXML({ data });
+console.log(data2);
 // console.log(JSON.stringify(xmlToData(data2), null, 2));
 
 // ReadConfig();

@@ -300,7 +300,11 @@ webui.get(
 
 webui.get(
   '/data/:plugin',
-  wrap(async (req, res) => {
+  wrap(async (req, res, next) => {
+    if (!ARGS.dev) {
+      next();
+      return;
+    }
     const pluginID = req.params['plugin'];
 
     res.render('data_plugin', data(req, 'Data Management', 'core', { subtitle: pluginID }));
@@ -310,7 +314,11 @@ webui.get(
 webui.post(
   '/data/db',
   json(),
-  wrap(async (req, res) => {
+  wrap(async (req, res, next) => {
+    if (!ARGS.dev) {
+      next();
+      return;
+    }
     const command = req.body.command;
     const args = req.body.args;
     const plugin = req.body.plugin;
@@ -318,29 +326,29 @@ webui.post(
     try {
       switch (command) {
         case 'FindOne':
-          res.send((await (APIFindOne as any)({ name: plugin, core: false }, ...args)) || '<null>');
+          res.json(await (APIFindOne as any)({ name: plugin, core: false }, ...args));
           break;
         case 'Find':
-          res.send((await (APIFind as any)({ name: plugin, core: false }, ...args)) || '<null>');
+          res.json(await (APIFind as any)({ name: plugin, core: false }, ...args));
           break;
         case 'Insert':
-          res.send((await (APIInsert as any)({ name: plugin, core: false }, ...args)) || '<null>');
+          res.json(await (APIInsert as any)({ name: plugin, core: false }, ...args));
           break;
         case 'Remove':
-          res.send((await (APIRemove as any)({ name: plugin, core: false }, ...args)) || '<null>');
+          res.json(await (APIRemove as any)({ name: plugin, core: false }, ...args));
           break;
         case 'Update':
-          res.send((await (APIUpdate as any)({ name: plugin, core: false }, ...args)) || '<null>');
+          res.json(await (APIUpdate as any)({ name: plugin, core: false }, ...args));
           break;
         case 'Upsert':
-          res.send((await (APIUpsert as any)({ name: plugin, core: false }, ...args)) || '<null>');
+          res.json(await (APIUpsert as any)({ name: plugin, core: false }, ...args));
           break;
         case 'Count':
-          res.send((await (APICount as any)({ name: plugin, core: false }, ...args)) || '<null>');
+          res.json(await (APICount as any)({ name: plugin, core: false }, ...args));
           break;
       }
     } catch (err) {
-      res.send({ error: err.toString() });
+      res.json({ error: err.toString() });
     }
   })
 );

@@ -36,6 +36,7 @@ import { EamusePlugin } from './EamusePlugin';
 import { EamuseRouteHandler } from './EamuseRouteContainer';
 import xml2json from 'fast-xml-parser';
 import _ from 'lodash';
+import { isPlainObject } from 'lodash';
 
 /* Exposing API */
 const $: any = global;
@@ -52,6 +53,9 @@ if (existsSync(tsconfig)) {
 }
 
 $.$ = (data: any) => {
+  if (!isPlainObject(data)) {
+    throw new Error('data is not a plain object. (Did you pass a KDataReader as data?)');
+  }
   return new KDataReader(data);
 };
 
@@ -273,7 +277,7 @@ export function LoadExternalPlugins() {
         loaded.push(plugin);
       } catch (err) {
         Logger.error(`failed during register()`, { plugin: name });
-        Logger.error(err);
+        Logger.error(err, { plugin: name });
       }
     }
 

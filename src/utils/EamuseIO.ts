@@ -8,7 +8,7 @@ import { compress, decompress } from './SMAZ';
 import hashids from 'hashids/cjs';
 import { NAMES } from './Consts';
 import { CONFIG } from './ArgConfig';
-import { isArray, get, groupBy } from 'lodash';
+import { isArray, get, groupBy, isPlainObject } from 'lodash';
 import { sizeof } from 'sizeof';
 
 const pkg: boolean = (process as any).pkg;
@@ -474,15 +474,18 @@ export async function GetProfiles() {
 }
 
 // Public API
-function CheckQuery(query: any) {
-  for (const key in query) {
-    if (key.startsWith('__')) {
-      throw new Error('query or doc field can not starts with "__"');
-    }
+function CheckQuery(query: any): any {
+  const sanitized: any = {};
+  if (isPlainObject(query)) {
+    for (const key in query) {
+      if (key == '__refid') continue; // ignore __refid
+      if (key.startsWith('__')) throw new Error('query or doc field can not starts with "__"');
 
-    if (typeof query[key] == 'object') {
-      CheckQuery(query[key]);
+      sanitized[key] = CheckQuery(query[key]);
     }
+    return sanitized;
+  } else {
+    return query;
   }
 }
 
@@ -503,7 +506,7 @@ export async function APIFindOne(
   let query: any = null;
 
   if (typeof arg1 == 'string' && typeof arg2 == 'object') {
-    CheckQuery(arg2);
+    arg2 = CheckQuery(arg2);
     query = {
       ...arg2,
       __reserved_field: 'plugins_profile',
@@ -511,14 +514,14 @@ export async function APIFindOne(
       __refid: arg1,
     };
   } else if (arg1 == null && typeof arg2 == 'object') {
-    CheckQuery(arg2);
+    arg2 = CheckQuery(arg2);
     query = {
       ...arg2,
       __reserved_field: 'plugins_profile',
       __affiliation: plugin.name,
     };
   } else if (typeof arg1 == 'object') {
-    CheckQuery(arg1);
+    arg1 = CheckQuery(arg1);
     query = {
       ...arg1,
       __reserved_field: 'plugins',
@@ -553,7 +556,7 @@ export async function APIFind(
 ) {
   let query: any = null;
   if (typeof arg1 == 'string' && typeof arg2 == 'object') {
-    CheckQuery(arg2);
+    arg2 = CheckQuery(arg2);
     query = {
       ...arg2,
       __reserved_field: 'plugins_profile',
@@ -561,14 +564,14 @@ export async function APIFind(
       __refid: arg1,
     };
   } else if (arg1 == null && typeof arg2 == 'object') {
-    CheckQuery(arg2);
+    arg2 = CheckQuery(arg2);
     query = {
       ...arg2,
       __reserved_field: 'plugins_profile',
       __affiliation: plugin.name,
     };
   } else if (typeof arg1 == 'object') {
-    CheckQuery(arg1);
+    arg1 = CheckQuery(arg1);
     query = {
       ...arg1,
       __reserved_field: 'plugins',
@@ -604,7 +607,7 @@ export async function APIInsert(
 ) {
   let doc: any = null;
   if (typeof arg1 == 'string' && typeof arg2 == 'object') {
-    CheckQuery(arg2);
+    arg2 = CheckQuery(arg2);
     if (!plugin.core) {
       const profile = await FindProfile(arg1);
       if (profile == null) {
@@ -621,7 +624,7 @@ export async function APIInsert(
   } else if (arg1 == null && typeof arg2 == 'object') {
     throw new Error('refid must be specified for Insert Query');
   } else if (typeof arg1 == 'object') {
-    CheckQuery(arg1);
+    arg1 = CheckQuery(arg1);
     doc = {
       ...arg1,
       __reserved_field: 'plugins',
@@ -649,21 +652,21 @@ export async function APIUpdate(
   let update: any = null;
   let signiture: any = { __affiliation: plugin.name };
   if (typeof arg1 == 'string' && typeof arg2 == 'object' && typeof arg3 == 'object') {
-    CheckQuery(arg2);
-    CheckQuery(arg3);
+    arg2 = CheckQuery(arg2);
+    arg3 = CheckQuery(arg3);
     query = arg2;
     update = arg3;
     signiture.__reserved_field = 'plugins_profile';
     signiture.__refid = arg1;
   } else if (arg1 == null && typeof arg2 == 'object' && typeof arg3 == 'object') {
-    CheckQuery(arg2);
-    CheckQuery(arg3);
+    arg2 = CheckQuery(arg2);
+    arg3 = CheckQuery(arg3);
     query = arg2;
     update = arg3;
     signiture.__reserved_field = 'plugins_profile';
   } else if (typeof arg1 == 'object' && typeof arg2 == 'object') {
-    CheckQuery(arg1);
-    CheckQuery(arg2);
+    arg1 = CheckQuery(arg1);
+    arg2 = CheckQuery(arg2);
     query = arg1;
     update = arg2;
     signiture.__reserved_field = 'plugins';
@@ -709,8 +712,8 @@ export async function APIUpsert(
   let update: any = null;
   let signiture: any = { __affiliation: plugin.name };
   if (typeof arg1 == 'string' && typeof arg2 == 'object' && typeof arg3 == 'object') {
-    CheckQuery(arg2);
-    CheckQuery(arg3);
+    arg2 = CheckQuery(arg2);
+    arg3 = CheckQuery(arg3);
     if (!plugin.core) {
       const profile = await FindProfile(arg1);
       if (profile == null) {
@@ -723,14 +726,14 @@ export async function APIUpsert(
     signiture.__reserved_field = 'plugins_profile';
     signiture.__refid = arg1;
   } else if (arg1 == null && typeof arg2 == 'object' && typeof arg3 == 'object') {
-    CheckQuery(arg2);
-    CheckQuery(arg3);
+    arg2 = CheckQuery(arg2);
+    arg3 = CheckQuery(arg3);
     query = arg2;
     update = arg3;
     signiture.__reserved_field = 'plugins_profile';
   } else if (typeof arg1 == 'object' && typeof arg2 == 'object') {
-    CheckQuery(arg1);
-    CheckQuery(arg2);
+    arg1 = CheckQuery(arg1);
+    arg2 = CheckQuery(arg2);
     query = arg1;
     update = arg2;
     signiture.__reserved_field = 'plugins';
@@ -773,7 +776,7 @@ export async function APIRemove(
 ) {
   let query: any = null;
   if (typeof arg1 == 'string' && typeof arg2 == 'object') {
-    CheckQuery(arg2);
+    arg2 = CheckQuery(arg2);
     query = {
       ...arg2,
       __reserved_field: 'plugins_profile',
@@ -781,14 +784,14 @@ export async function APIRemove(
       __refid: arg1,
     };
   } else if (arg1 == null && typeof arg2 == 'object') {
-    CheckQuery(arg2);
+    arg2 = CheckQuery(arg2);
     query = {
       ...arg2,
       __reserved_field: 'plugins_profile',
       __affiliation: plugin.name,
     };
   } else if (typeof arg1 == 'object') {
-    CheckQuery(arg1);
+    arg1 = CheckQuery(arg1);
     query = {
       ...arg1,
       __reserved_field: 'plugins',
@@ -813,7 +816,7 @@ export async function APICount(
 ) {
   let query: any = null;
   if (typeof arg1 == 'string' && typeof arg2 == 'object') {
-    CheckQuery(arg2);
+    arg2 = CheckQuery(arg2);
     query = {
       ...arg2,
       __reserved_field: 'plugins_profile',
@@ -821,14 +824,14 @@ export async function APICount(
       __refid: arg1,
     };
   } else if (arg1 == null && typeof arg2 == 'object') {
-    CheckQuery(arg2);
+    arg2 = CheckQuery(arg2);
     query = {
       ...arg2,
       __reserved_field: 'plugins_profile',
       __affiliation: plugin.name,
     };
   } else if (typeof arg1 == 'object') {
-    CheckQuery(arg1);
+    arg1 = CheckQuery(arg1);
     query = {
       ...arg1,
       __reserved_field: 'plugins',
