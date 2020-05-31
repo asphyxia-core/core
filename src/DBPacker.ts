@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 
 const codebook: {
   [key: string]: number;
@@ -365,12 +365,18 @@ export const decompress = function (input: string) {
 
   return output;
 };
-try {
-  if (process.argv[2] == 'compress') {
-    console.log(compress(readFileSync(process.argv[3], { encoding: 'utf8' })));
-  } else if (process.argv[2] == 'decompress') {
-    console.log(decompress(readFileSync(process.argv[3], { encoding: 'utf8' })));
+
+if (process.argv.length < 4) {
+  console.error('node migrate.js <inFile> <outFile>');
+} else {
+  try {
+    writeFileSync(
+      process.argv[3],
+      decompress(readFileSync(process.argv[2], { encoding: 'utf8' }))
+        .replace(/"__reserved_field"/g, '"__s"')
+        .replace(/"__affiliation"/g, '"__a"')
+    );
+  } catch {
+    console.error('operation failed');
   }
-} catch {
-  console.error('operation failed');
 }

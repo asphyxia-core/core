@@ -1,9 +1,13 @@
 import { ArgumentParser } from 'argparse';
 import { VERSION } from './Consts';
-import { CONFIG_PATH } from './EamuseIO';
+
 import { Logger } from './Logger';
 import { readFileSync, writeFileSync } from 'fs';
 import { parse, stringify } from 'ini';
+import path from 'path';
+
+const EXEC_PATH = path.resolve((process as any).pkg ? path.dirname(process.argv0) : process.cwd());
+const CONFIG_PATH = path.join(EXEC_PATH, 'config.ini');
 
 const parser = new ArgumentParser({
   version: VERSION,
@@ -39,6 +43,13 @@ parser.addArgument(['--dev', '--console'], {
   help: 'Developer mode: Enable console for plugins and data management features',
   defaultValue: false,
   dest: 'dev',
+  action: 'storeTrue',
+});
+
+parser.addArgument(['--force-load-db'], {
+  help: 'Force load savedata and discard corrupted messages',
+  defaultValue: false,
+  dest: 'fixdb',
   action: 'storeTrue',
 });
 

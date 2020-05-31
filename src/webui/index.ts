@@ -182,7 +182,7 @@ webui.get(
   wrap(async (req, res) => {
     const profiles = await GetProfiles();
     for (const profile of profiles) {
-      profile.cards = await Count({ __reserved_field: 'card', __refid: profile.__refid });
+      profile.cards = await Count({ __s: 'card', __refid: profile.__refid });
     }
     res.render('profiles', data(req, 'Profiles', 'core', { profiles }));
   })

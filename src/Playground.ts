@@ -18,28 +18,28 @@ import { KDataReader } from './utils/KDataReader';
 // const key = new KonmaiEncrypt('1-5ebc47ba-9868');
 // writeFileSync(`${key.getPublicKey()}.bin`, key.encrypt(request));
 
-const data = kattr(
-  {
-    test: '"',
-    test2: '&',
-  },
-  {
-    child: karray('s32', [100, 100, 200, 200]),
-    child2: kitem('ip4', '192.168.1.1'),
-    group: [kitem('s64', BigInt(1000)), kitem('bin', Buffer.from('HAHA'))],
-    group2: [karray('s64', [BigInt(1000), BigInt(1000)]), kitem('2s32', [32, 32])],
-    test: kitem('str', 'This is a string'),
-  }
-);
+// const data = kattr(
+//   {
+//     test: '"',
+//     test2: '&',
+//   },
+//   {
+//     child: karray('s32', [100, 100, 200, 200]),
+//     child2: kitem('ip4', '192.168.1.1'),
+//     group: [kitem('s64', BigInt(1000)), kitem('bin', Buffer.from('HAHA'))],
+//     group2: [karray('s64', [BigInt(1000), BigInt(1000)]), kitem('2s32', [32, 32])],
+//     test: kitem('str', 'This is a string'),
+//   }
+// );
 
-const encoded = kencode({ data });
-const decoded = kdecode(encoded);
+// const encoded = kencode({ data });
+// const decoded = kdecode(encoded);
 
-const a = new KDataReader(decoded);
-console.log(a.numbers('data.child'));
+// const a = new KDataReader(decoded);
+// console.log(a.numbers('data.child'));
 
-const data2 = dataToXML({ data });
-console.log(data2);
+// const data2 = dataToXML({ data });
+// console.log(data2);
 // console.log(JSON.stringify(xmlToData(data2), null, 2));
 
 // ReadConfig();
@@ -47,3 +47,6 @@ console.log(data2);
 
 // const data = xmlToData(pugFile('build\\plugins\\sdvx\\template\\common4.pug'));
 // console.log(data);
+
+const data =
+  '{"collection":"mix","id":2,"code":"202974059619","name":"VVVV RANDOM MIX No.1","creator":"VVVV","param":"{ "dbVer" : "20191217", "gene" : { "params" : "{ \\"minorVer\\" : \\"20190729\\", \\"seed\\" : 847044788 }", "ver" : "20180222" }, "musics" : [ { "grade" : 3, "id" : 24 }, { "grade" : 3, "id" : 252 }, { "grade" : 2, "id" : 606 } ], "voxdj" : { "params" : "", "ver" : "20180222" } }","tag":1,"jacket":0,"_id":"keYijDT6zXc9sLgU","createdAt":"2020-05-31T00:07:38.734Z","updatedAt":"2020-05-31T00:07:38.734Z","__s":"plugins_profile","__a":"sdvx@asphyxia","__refid":"A59A6D7499842E3B"}';

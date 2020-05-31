@@ -4,31 +4,43 @@ import { Logger } from './Logger';
 import path from 'path';
 import nedb from 'nedb';
 import { nfc2card } from './CardCipher';
-import { compress, decompress } from './SMAZ';
 import hashids from 'hashids/cjs';
 import { NAMES } from './Consts';
-import { CONFIG } from './ArgConfig';
+import { CONFIG, ARGS } from './ArgConfig';
 import { isArray, get, groupBy, isPlainObject } from 'lodash';
 import { sizeof } from 'sizeof';
 import { PluginDetect } from '../eamuse/ExternalPluginLoader';
 
 const pkg: boolean = (process as any).pkg;
-export const EXEC_PATH = path.resolve(pkg ? path.dirname(process.argv0) : process.cwd());
+const EXEC_PATH = path.resolve(pkg ? path.dirname(process.argv0) : process.cwd());
+
 export const PLUGIN_PATH = path.join(EXEC_PATH, 'plugins');
-export const SAVE_PATH = path.join(EXEC_PATH, 'savedata.db');
 export const ASSETS_PATH = path.join(pkg ? __dirname : `../build-env`, 'assets');
-export const CONFIG_PATH = path.join(EXEC_PATH, 'config.ini');
+
+const SAVE_PATH = path.join(EXEC_PATH, 'savedata.db');
 
 const DB = new nedb({
   filename: SAVE_PATH,
   timestampData: true,
-  afterSerialization: compress,
-  beforeDeserialization: decompress,
+  corruptAlertThreshold: ARGS.fixdb ? 0.2 : 0,
 });
 
 DB.loadDatabase(err => {
   if (err) {
-    Logger.error(err);
+    if (err.message && err.message.startsWith('More than')) {
+      if (ARGS.fixdb) {
+        Logger.error(
+          'Savedata is more than 20% corrupted. Which means the savedata might be beyond repair.'
+        );
+      } else {
+        Logger.error(
+          'Savedata corruption detected. Run with "--force-load-db" argument to force load data, and corrupted portion will be discarded. It is recommended to backup savedata.db before force loading.'
+        );
+      }
+    } else {
+      Logger.error(err);
+    }
+
     process.exit(1);
   }
 
@@ -43,13 +55,13 @@ DB.loadDatabase(err => {
       process.exit(1);
     }
 
-    DB.ensureIndex({ fieldName: '__reserved_field' }, function (err) {
+    DB.ensureIndex({ fieldName: '__s' }, function (err) {
       if (err) {
         Logger.error(err);
       }
     });
 
-    DB.ensureIndex({ fieldName: 'cid' }, function (err) {
+    DB.ensureIndex({ fieldName: '__a' }, function (err) {
       if (err) {
         Logger.error(err);
       }
@@ -180,14 +192,14 @@ export async function GetUniqueInt() {
   return new Promise<number>(resolve => {
     DB.findOne(
       {
-        __reserved_field: 'counter',
+        __s: 'counter',
       },
       (err, doc) => {
         if (err) return resolve(-1);
         const result = doc ? doc.value : 0;
         DB.update(
           {
-            __reserved_field: 'counter',
+            __s: 'counter',
           },
           { $inc: { value: 1 } },
           { upsert: true },
@@ -210,14 +222,14 @@ export async function PluginStats() {
     }[]
   >(resolve => {
     DB.find({
-      __reserved_field: { $in: ['plugins', 'plugins_profile'] },
+      __s: { $in: ['plugins', 'plugins_profile'] },
     }).exec((err, res) => {
       if (err) {
         resolve([]);
         return;
       }
 
-      const group = groupBy(res, '__affiliation');
+      const group = groupBy(res, '__a');
       const stats = [];
       for (const plugin of Object.keys(group).sort()) {
         stats.push({
@@ -235,7 +247,7 @@ export async function PurgePlugin(affiliation: string) {
   return new Promise<boolean>(resolve => {
     DB.remove(
       {
-        __affiliation: affiliation,
+        __a: affiliation,
       },
       { multi: true },
       (err, res) => {
@@ -259,7 +271,7 @@ export async function GetProfileCount() {
   return new Promise<number>(resolve => {
     DB.count(
       {
-        __reserved_field: 'profile',
+        __s: 'profile',
       },
       (err, n) => {
         if (err) resolve(-1);
@@ -273,7 +285,7 @@ export async function FindCard(cid: string) {
   return new Promise<any>(resolve => {
     DB.findOne(
       {
-        __reserved_field: 'card',
+        __s: 'card',
         cid,
       },
       (err, res) => {
@@ -288,7 +300,7 @@ export async function FindCardsByRefid(refid: string) {
   return new Promise<any>(resolve => {
     DB.find(
       {
-        __reserved_field: 'card',
+        __s: 'card',
         __refid: refid,
       },
       {}
@@ -315,7 +327,7 @@ export async function CreateCard(cid: string, refid: string, forceprint?: string
   }
 
   return new Promise<any>(resolve => {
-    DB.insert({ __reserved_field: 'card', __refid: refid, print, cid }, (err, doc) => {
+    DB.insert({ __s: 'card', __refid: refid, print, cid }, (err, doc) => {
       if (err) resolve(false);
       else resolve(doc);
     });
@@ -324,7 +336,7 @@ export async function CreateCard(cid: string, refid: string, forceprint?: string
 
 export async function DeleteCard(cid: string) {
   return new Promise<boolean>(resolve => {
-    DB.remove({ __reserved_field: 'card', cid }, { multi: true }, err => {
+    DB.remove({ __s: 'card', cid }, { multi: true }, err => {
       if (err) resolve(false);
       else resolve(true);
     });
@@ -335,7 +347,7 @@ export async function FindProfile(refid: string) {
   return new Promise<any>(resolve => {
     DB.findOne(
       {
-        __reserved_field: 'profile',
+        __s: 'profile',
         __refid: refid,
       },
       (err, res) => {
@@ -358,7 +370,7 @@ export async function CreateProfile(pin: string, gameCode: string) {
   return new Promise<any>(resolve => {
     DB.insert(
       {
-        __reserved_field: 'profile',
+        __s: 'profile',
         __refid: refid,
         pin,
         name,
@@ -376,7 +388,7 @@ export async function UpdateProfile(refid: string, update: any, upsert: boolean 
   return new Promise<boolean>(resolve => {
     DB.update(
       {
-        __reserved_field: 'profile',
+        __s: 'profile',
         __refid: refid,
       },
       {
@@ -404,7 +416,7 @@ export async function BindProfile(refid: string, gameCode: string) {
   return new Promise<any>(resolve => {
     DB.update(
       {
-        __reserved_field: 'profile',
+        __s: 'profile',
         __refid: refid,
       },
       { $addToSet: { models: gameCode } },
@@ -421,7 +433,7 @@ export async function GetProfiles() {
   return new Promise<any>(resolve => {
     DB.find(
       {
-        __reserved_field: 'profile',
+        __s: 'profile',
       },
       {}
     )
@@ -465,23 +477,23 @@ export async function APIFindOne(plugin: PluginDetect, arg1: string | any, arg2?
     arg2 = CheckQuery(arg2);
     query = {
       ...arg2,
-      __reserved_field: 'plugins_profile',
-      __affiliation: plugin.name,
+      __s: 'plugins_profile',
+      __a: plugin.name,
       __refid: arg1,
     };
   } else if (arg1 == null && typeof arg2 == 'object') {
     arg2 = CheckQuery(arg2);
     query = {
       ...arg2,
-      __reserved_field: 'plugins_profile',
-      __affiliation: plugin.name,
+      __s: 'plugins_profile',
+      __a: plugin.name,
     };
   } else if (typeof arg1 == 'object') {
     arg1 = CheckQuery(arg1);
     query = {
       ...arg1,
-      __reserved_field: 'plugins',
-      __affiliation: plugin.name,
+      __s: 'plugins',
+      __a: plugin.name,
     };
   } else {
     throw new Error('invalid FindOne query');
@@ -493,8 +505,8 @@ export async function APIFindOne(plugin: PluginDetect, arg1: string | any, arg2?
       plugin.core
         ? {}
         : {
-            __reserved_field: 0,
-            __affiliation: 0,
+            __s: 0,
+            __a: 0,
             __collection: 0,
           },
       (err, doc) => {
@@ -511,23 +523,23 @@ export async function APIFind(plugin: PluginDetect, arg1: string | any, arg2?: a
     arg2 = CheckQuery(arg2);
     query = {
       ...arg2,
-      __reserved_field: 'plugins_profile',
-      __affiliation: plugin.name,
+      __s: 'plugins_profile',
+      __a: plugin.name,
       __refid: arg1,
     };
   } else if (arg1 == null && typeof arg2 == 'object') {
     arg2 = CheckQuery(arg2);
     query = {
       ...arg2,
-      __reserved_field: 'plugins_profile',
-      __affiliation: plugin.name,
+      __s: 'plugins_profile',
+      __a: plugin.name,
     };
   } else if (typeof arg1 == 'object') {
     arg1 = CheckQuery(arg1);
     query = {
       ...arg1,
-      __reserved_field: 'plugins',
-      __affiliation: plugin.name,
+      __s: 'plugins',
+      __a: plugin.name,
     };
   } else {
     throw new Error('invalid Find query');
@@ -539,8 +551,8 @@ export async function APIFind(plugin: PluginDetect, arg1: string | any, arg2?: a
       plugin.core
         ? {}
         : {
-            __reserved_field: 0,
-            __affiliation: 0,
+            __s: 0,
+            __a: 0,
             __collection: 0,
           }
     )
@@ -565,8 +577,8 @@ export async function APIInsert(plugin: PluginDetect, arg1: string | any, arg2?:
     }
     doc = {
       ...arg2,
-      __reserved_field: 'plugins_profile',
-      __affiliation: plugin.name,
+      __s: 'plugins_profile',
+      __a: plugin.name,
       __refid: arg1,
     };
   } else if (arg1 == null && typeof arg2 == 'object') {
@@ -575,8 +587,8 @@ export async function APIInsert(plugin: PluginDetect, arg1: string | any, arg2?:
     arg1 = CheckQuery(arg1);
     doc = {
       ...arg1,
-      __reserved_field: 'plugins',
-      __affiliation: plugin.name,
+      __s: 'plugins',
+      __a: plugin.name,
     };
   } else {
     throw new Error('invalid Insert query');
@@ -593,26 +605,26 @@ export async function APIInsert(plugin: PluginDetect, arg1: string | any, arg2?:
 export async function APIUpdate(plugin: PluginDetect, arg1: string | any, arg2: any, arg3?: any) {
   let query: any = null;
   let update: any = null;
-  let signiture: any = { __affiliation: plugin.name };
+  let signiture: any = { __a: plugin.name };
   if (typeof arg1 == 'string' && typeof arg2 == 'object' && typeof arg3 == 'object') {
     arg2 = CheckQuery(arg2);
     arg3 = CheckQuery(arg3);
     query = arg2;
     update = arg3;
-    signiture.__reserved_field = 'plugins_profile';
+    signiture.__s = 'plugins_profile';
     signiture.__refid = arg1;
   } else if (arg1 == null && typeof arg2 == 'object' && typeof arg3 == 'object') {
     arg2 = CheckQuery(arg2);
     arg3 = CheckQuery(arg3);
     query = arg2;
     update = arg3;
-    signiture.__reserved_field = 'plugins_profile';
+    signiture.__s = 'plugins_profile';
   } else if (typeof arg1 == 'object' && typeof arg2 == 'object') {
     arg1 = CheckQuery(arg1);
     arg2 = CheckQuery(arg2);
     query = arg1;
     update = arg2;
-    signiture.__reserved_field = 'plugins';
+    signiture.__s = 'plugins';
   } else {
     throw new Error('invalid Update query');
   }
@@ -648,7 +660,7 @@ export async function APIUpdate(plugin: PluginDetect, arg1: string | any, arg2: 
 export async function APIUpsert(plugin: PluginDetect, arg1: string | any, arg2: any, arg3?: any) {
   let query: any = null;
   let update: any = null;
-  let signiture: any = { __affiliation: plugin.name };
+  let signiture: any = { __a: plugin.name };
   if (typeof arg1 == 'string' && typeof arg2 == 'object' && typeof arg3 == 'object') {
     arg2 = CheckQuery(arg2);
     arg3 = CheckQuery(arg3);
@@ -661,20 +673,20 @@ export async function APIUpsert(plugin: PluginDetect, arg1: string | any, arg2: 
     }
     query = arg2;
     update = arg3;
-    signiture.__reserved_field = 'plugins_profile';
+    signiture.__s = 'plugins_profile';
     signiture.__refid = arg1;
   } else if (arg1 == null && typeof arg2 == 'object' && typeof arg3 == 'object') {
     arg2 = CheckQuery(arg2);
     arg3 = CheckQuery(arg3);
     query = arg2;
     update = arg3;
-    signiture.__reserved_field = 'plugins_profile';
+    signiture.__s = 'plugins_profile';
   } else if (typeof arg1 == 'object' && typeof arg2 == 'object') {
     arg1 = CheckQuery(arg1);
     arg2 = CheckQuery(arg2);
     query = arg1;
     update = arg2;
-    signiture.__reserved_field = 'plugins';
+    signiture.__s = 'plugins';
   } else {
     throw new Error('invalid Upsert query');
   }
@@ -713,23 +725,23 @@ export async function APIRemove(plugin: PluginDetect, arg1: string | any, arg2?:
     arg2 = CheckQuery(arg2);
     query = {
       ...arg2,
-      __reserved_field: 'plugins_profile',
-      __affiliation: plugin.name,
+      __s: 'plugins_profile',
+      __a: plugin.name,
       __refid: arg1,
     };
   } else if (arg1 == null && typeof arg2 == 'object') {
     arg2 = CheckQuery(arg2);
     query = {
       ...arg2,
-      __reserved_field: 'plugins_profile',
-      __affiliation: plugin.name,
+      __s: 'plugins_profile',
+      __a: plugin.name,
     };
   } else if (typeof arg1 == 'object') {
     arg1 = CheckQuery(arg1);
     query = {
       ...arg1,
-      __reserved_field: 'plugins',
-      __affiliation: plugin.name,
+      __s: 'plugins',
+      __a: plugin.name,
     };
   } else {
     throw new Error('invalid Remove query');
@@ -749,23 +761,23 @@ export async function APICount(plugin: PluginDetect, arg1: string | any, arg2?: 
     arg2 = CheckQuery(arg2);
     query = {
       ...arg2,
-      __reserved_field: 'plugins_profile',
-      __affiliation: plugin.name,
+      __s: 'plugins_profile',
+      __a: plugin.name,
       __refid: arg1,
     };
   } else if (arg1 == null && typeof arg2 == 'object') {
     arg2 = CheckQuery(arg2);
     query = {
       ...arg2,
-      __reserved_field: 'plugins_profile',
-      __affiliation: plugin.name,
+      __s: 'plugins_profile',
+      __a: plugin.name,
     };
   } else if (typeof arg1 == 'object') {
     arg1 = CheckQuery(arg1);
     query = {
       ...arg1,
-      __reserved_field: 'plugins',
-      __affiliation: plugin.name,
+      __s: 'plugins',
+      __a: plugin.name,
     };
   } else {
     throw new Error('invalid Count query');
