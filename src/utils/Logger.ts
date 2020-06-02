@@ -1,6 +1,5 @@
 import winston from 'winston';
 import chalk from 'chalk';
-import { ARGS } from './ArgConfig';
 
 const isDebug = (process as any).pkg == null;
 

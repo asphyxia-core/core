@@ -39,12 +39,11 @@ import {
   APICount,
 } from '../utils/EamuseIO';
 import { urlencoded, json } from 'body-parser';
-import humanize from 'humanize-string';
 import path from 'path';
 import { ROOT_CONTAINER } from '../eamuse/index';
 import { fun } from './fun';
 import { card2nfc, nfc2card, cardType } from '../utils/CardCipher';
-import { groupBy } from 'lodash';
+import { groupBy, startCase, lowerCase, upperFirst } from 'lodash';
 import { sizeof } from 'sizeof';
 import { emit } from './emit';
 import { Logger } from '../utils/Logger';
@@ -99,7 +98,7 @@ function data(req: Request, title: string, plugin: string, attr?: any) {
       return {
         name: p.Name,
         id: p.Identifier,
-        pages: p.Pages.map(f => ({ name: humanize(f), link: f })),
+        pages: p.Pages.map(f => ({ name: startCase(f), link: f })),
       };
     }),
     ...attr,
@@ -144,7 +143,7 @@ function ConfigData(plugin: string) {
 
   if (configMap) {
     for (const [key, c] of configMap) {
-      const name = get(c, 'name', humanize(key));
+      const name = get(c, 'name', upperFirst(lowerCase(key)));
       const current = get(configData, key, c.default);
       let error = validate(c, current);
 
@@ -544,12 +543,15 @@ webui.get(
       page = `profile_${pageName.toString()}`;
     }
 
-    const content = await plugin.render(page, refid.toString());
+    const content = await plugin.render(page, { query: req.query }, refid.toString());
     if (content == null) {
       return next();
     }
 
-    const tabs = plugin.ProfilePages.map(p => ({ name: humanize(p.substr(8)), link: p.substr(8) }));
+    const tabs = plugin.ProfilePages.map(p => ({
+      name: startCase(p.substr(8)),
+      link: p.substr(8),
+    }));
 
     res.render(
       'custom_profile',
@@ -558,7 +560,7 @@ webui.get(
         tabs,
         subtitle: 'Profiles',
         subidentifier: 'profiles',
-        subsubtitle: humanize(page.substr(8)),
+        subsubtitle: startCase(page.substr(8)),
         subsubidentifier: page.substr(8),
         refid: refid.toString(),
       })
@@ -578,7 +580,7 @@ webui.get(
 
     const pageName = req.params['page'];
 
-    const content = await plugin.render(pageName);
+    const content = await plugin.render(pageName, { query: req.query });
     if (content == null) {
       return next();
     }
@@ -587,7 +589,7 @@ webui.get(
       'custom',
       data(req, plugin.Name, plugin.Identifier, {
         content,
-        subtitle: humanize(pageName),
+        subtitle: startCase(pageName),
         subidentifier: pageName,
       })
     );

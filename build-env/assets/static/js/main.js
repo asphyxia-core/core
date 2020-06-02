@@ -89,7 +89,3 @@
     $(this).css({ background: GeoPattern.generate(str).toDataUrl() });
   });
 })();
-
-function emit(event, data) {
-  return axios.post(`/emit/${event}`, data);
-}

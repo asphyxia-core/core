@@ -2,7 +2,7 @@
 import iconv from 'iconv-lite';
 
 import xml2json from 'fast-xml-parser';
-import { toSafeInteger, isArrayLike, get, isArray, isEmpty, toString, isNil } from 'lodash';
+import { toSafeInteger, isArrayLike, get, isArray, isNil } from 'lodash';
 import json2xml = xml2json.j2xParser;
 
 import { BinaryLengthType, ReadBuffer, WriteBuffer } from './AutoBuffer';

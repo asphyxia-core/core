@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { urlencoded, json } from 'body-parser';
 import { ROOT_CONTAINER } from '../eamuse/index';
+import { Logger } from '../utils/Logger';
 
 export const emit = Router();
 
@@ -27,6 +28,8 @@ emit.post('/:event', urlencoded({ extended: true }), json(), async (req, res) =>
   try {
     await plugin.CallEvent(event, req.body);
   } catch (err) {
+    Logger.error(`WebUIEvent Error: ${event}`);
+    Logger.error(err, { plugin: plugin.Identifier });
     res.status(500).send(err);
     return;
   }

@@ -1,3 +1,8 @@
+## v1.17 release candidate
+
+- **PluginWebUI**: URL queries is now exposed as `query` for custom WebUI pug files
+- **PluginWebUI**: `emit` function is now available directly in pug files
+
 ## v1.16 beta
 
 - **WebUI**: Improved experience on mobile

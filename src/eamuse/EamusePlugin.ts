@@ -245,7 +245,7 @@ export class EamusePlugin {
     return null;
   }
 
-  public async render(page: string, refid?: string) {
+  public async render(page: string, data: any, refid?: string) {
     const cache = this.uiCache[page];
     if (!cache) return null;
 
@@ -274,7 +274,7 @@ export class EamusePlugin {
       local[prop] = await eval(cache.props[prop]);
     }
 
-    return cache.fn(local);
+    return cache.fn({ ...data, ...local });
   }
 
   public async run(
