@@ -8,6 +8,7 @@ typings/*
 build-env/*
 !build-env/assets/
 !build-env/typescript/
+!build-env/pkg-cache
 !build-env/package.json
 
 .vscode
