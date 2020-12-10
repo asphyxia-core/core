@@ -19,9 +19,7 @@ npx ncc build .\dist\AsphyxiaCore.js -o .\build-env --external pug --external ts
 Write-Output "Packing exe"
 npx pkg .\build-env -t "node12.16.1-win-x64,node12.16.1-win-x86,node12.16.1-linux-x64" -o .\build\asphyxia-core --options no-warnings
 
-# Renaming 64bit versions
-# Move-Item -Path ".\build\asphyxia-x64.exe" -Destination ".\build\asphyxia.exe" -Force | Out-Null
-
 # Packing zips
-# Compress-Archive -Path ".\build\asphyxia.exe" -DestinationPath ".\build\asphyxia-$VERSION.zip" -Force
-# Compress-Archive -Path ".\build\asphyxia-x86.exe" -DestinationPath ".\build\asphyxia-$VERSION-x86.zip" -Force
+Compress-Archive -Path ".\build\asphyxia-core-win-x64.exe", ".\plugins" -DestinationPath ".\build\asphyxia-core-win-x64.zip" -Force
+Compress-Archive -Path ".\build\asphyxia-core-win-x86.exe", ".\plugins" -DestinationPath ".\build\asphyxia-core-win-x86.zip" -Force
+Compress-Archive -Path ".\build\asphyxia-core-linux-x64", ".\plugins" -DestinationPath ".\build\asphyxia-core-linux-x64.zip" -Force
