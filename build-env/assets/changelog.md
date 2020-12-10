@@ -6,6 +6,7 @@
 - **API**: Fixed a typechecking issue where `{ exists: true }` query is only allowed on number/string fields
 - **API**: Provided API `R.DataFile` to allow users to upload their data to the plugins folder
 - **API**: `DB.Upsert` now rejects null as refid
+- **API**: Added `CORE_VERSION`, `CORE_VERSION_MAJOR` and `CORE_VERSION_MINOR` constants
 
 ## v1.18
 
