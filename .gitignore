@@ -9,6 +9,7 @@ build-env/*
 !build-env/assets/
 !build-env/typescript/
 !build-env/pkg-cache
+!build-env/plugins
 !build-env/package.json
 
 .vscode

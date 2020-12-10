@@ -1,0 +1,3 @@
+[submodule "build-env/plugins/_example@identifier"]
+	path = build-env/plugins/_example@identifier
+	url = https://github.com/asphyxia-core/plugin-template
