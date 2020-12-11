@@ -358,3 +358,12 @@ a.tag.is-dark:hover {
 #shell-content code {
   overflow-x: hidden;
 }
+
+.no-bottom {
+  margin-bottom: 0 !important;
+}
+
+.menu-item-label.expandable {
+  width: 75%;
+  overflow-wrap: break-word;
+}

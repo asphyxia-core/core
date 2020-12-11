@@ -1,6 +1,13 @@
+## v1.20
+
+- **API**: Added `IO.Exists` for checking whether a file exists
+- **API**: Added `U.NFC2Card` and `U.Card2NFC` for card number conversion
+- **WebUI**: Removed "Game Support" section in plugins' overview if no game support is registered
+- **WebUI**: Minor WebUI visual update
+
 ## v1.19
 
-- **WebUI**: Query shell is now avaliable for all installed plugins even if there are no DB data of them
+- **WebUI**: Query shell is now available for all installed plugins even if there are no DB data of them
 - **WebUI**: Fixed a issue where the WebUI of plugins with uppercase letter cannot be accessed
 - **WebUI**: Custom WebUI pages now works without `//DATA//` section.
 - **API**: Fixed a typechecking issue where `{ exists: true }` query is only allowed on number/string fields
@@ -42,7 +49,7 @@
 ## v1.13 beta
 
 - **PluginLoader**: Now a gamecode can not be registered by multiple plugins
-- **Router**: Errors in plugins now print callstack
+- **Router**: Errors in plugins now print stack
 - **Typescript**: Updated to 3.9.3
 - **Typescript**: Typescript will now skip type checking if CORE is not in Developer Mode
 - **CORE**: Fixed a problem where kencoded-message parsing fails if the message contains arrays

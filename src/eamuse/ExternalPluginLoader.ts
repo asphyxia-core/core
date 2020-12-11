@@ -28,6 +28,7 @@ import {
   APIUpdate,
   APIUpsert,
   APICount,
+  Exists,
 } from '../utils/EamuseIO';
 import { readdirSync, existsSync } from 'fs';
 import {
@@ -44,6 +45,7 @@ import xml2json from 'fast-xml-parser';
 import _ from 'lodash';
 import { isPlainObject } from 'lodash';
 import { VERSION } from '../utils/Consts';
+import { card2nfc, nfc2card } from '../utils/CardCipher';
 
 /** Caller Detection */
 export function GetCallerPlugin(): string {
@@ -69,11 +71,11 @@ export function GetCallerPlugin(): string {
   return null;
 }
 
-const WrapCall = (name: string, func: any, def: any) => {
+const WrapCall = (methodName: string, func: any, def: any) => {
   return (...args: any) => {
     const plugin = GetCallerPlugin();
     if (!plugin) {
-      Logger.error(`${name} unexpected error`);
+      Logger.error(`${methodName} unexpected error`);
       return def;
     }
     return func({ name: plugin, core: false }, ...args);
@@ -135,6 +137,7 @@ export function LoadExternalPlugins() {
     WriteFile: WrapCall('IO.WriteFile', WriteFile, Pro(void 0)),
     ReadFile: WrapCall('IO.ReadFile', ReadFile, Pro(null)),
     ReadDir: WrapCall('IO.ReadDir', ReadDir, Pro([])),
+    Exists: WrapCall('IO.Exists', Exists, false),
   };
 
   $.DB = {
@@ -163,6 +166,20 @@ export function LoadExternalPlugins() {
       if (!CONFIG[plugin]) return undefined;
       return CONFIG[plugin][key];
     },
+    NFC2Card: (nfc: string) => {
+      try {
+        return nfc2card(nfc);
+      } catch {
+        return null;
+      }
+    },
+    Card2NFC: (card: string) => {
+      try {
+        return card2nfc(card);
+      } catch {
+        return null;
+      }
+    }
   };
 
   $.R = {

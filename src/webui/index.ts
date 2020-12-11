@@ -100,6 +100,7 @@ function data(req: Request, title: string, plugin: string, attr?: any) {
       return {
         name: p.Name,
         id: p.Identifier,
+        webOnly: p.GameCodes.length == 0,
         pages: p.Pages.map(f => ({ name: startCase(f), link: f })),
       };
     }),

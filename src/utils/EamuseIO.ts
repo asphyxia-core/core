@@ -128,6 +128,11 @@ export async function ReadDir(plugin: PluginDetect, file: string) {
   });
 }
 
+export function Exists(plugin: PluginDetect, file: string) {
+  const target = path.resolve(PLUGIN_PATH, plugin.name, file);
+  return existsSync(target);
+}
+
 export async function WriteFile(
   plugin: PluginDetect,
   file: string,
@@ -337,11 +342,11 @@ export async function FindCardsByRefid(refid: string) {
   });
 }
 
-export async function CreateCard(cid: string, refid: string, forceprint?: string) {
+export async function CreateCard(cid: string, refid: string, forcePrint?: string) {
   let print = '<Invalid Card>';
 
-  if (forceprint) {
-    print = forceprint;
+  if (forcePrint) {
+    print = forcePrint;
   } else {
     try {
       print = nfc2card(cid);
@@ -629,36 +634,36 @@ export async function APIInsert(plugin: PluginDetect, arg1: string | any, arg2?:
 export async function APIUpdate(plugin: PluginDetect, arg1: string | any, arg2: any, arg3?: any) {
   let query: any = null;
   let update: any = null;
-  let signiture: any = { __a: plugin.name };
+  let signature: any = { __a: plugin.name };
   if (typeof arg1 == 'string' && typeof arg2 == 'object' && typeof arg3 == 'object') {
     arg2 = CheckQuery(arg2);
     arg3 = CheckQuery(arg3);
     query = arg2;
     update = arg3;
-    signiture.__s = 'plugins_profile';
-    signiture.__refid = arg1;
+    signature.__s = 'plugins_profile';
+    signature.__refid = arg1;
   } else if (arg1 == null && typeof arg2 == 'object' && typeof arg3 == 'object') {
     arg2 = CheckQuery(arg2);
     arg3 = CheckQuery(arg3);
     query = arg2;
     update = arg3;
-    signiture.__s = 'plugins_profile';
+    signature.__s = 'plugins_profile';
   } else if (typeof arg1 == 'object' && typeof arg2 == 'object') {
     arg1 = CheckQuery(arg1);
     arg2 = CheckQuery(arg2);
     query = arg1;
     update = arg2;
-    signiture.__s = 'plugins';
+    signature.__s = 'plugins';
   } else {
     throw new Error('invalid Update query');
   }
 
-  query = { ...query, ...signiture };
+  query = { ...query, ...signature };
 
   if (!get(Object.keys(update), '0', '').startsWith('$')) {
     update = {
       ...update,
-      ...signiture,
+      ...signature,
     };
   }
 
@@ -684,7 +689,7 @@ export async function APIUpdate(plugin: PluginDetect, arg1: string | any, arg2: 
 export async function APIUpsert(plugin: PluginDetect, arg1: string | any, arg2: any, arg3?: any) {
   let query: any = null;
   let update: any = null;
-  let signiture: any = { __a: plugin.name };
+  let signature: any = { __a: plugin.name };
   if (typeof arg1 == 'string' && typeof arg2 == 'object' && typeof arg3 == 'object') {
     arg2 = CheckQuery(arg2);
     arg3 = CheckQuery(arg3);
@@ -697,8 +702,8 @@ export async function APIUpsert(plugin: PluginDetect, arg1: string | any, arg2: 
     }
     query = arg2;
     update = arg3;
-    signiture.__s = 'plugins_profile';
-    signiture.__refid = arg1;
+    signature.__s = 'plugins_profile';
+    signature.__refid = arg1;
   } else if (arg1 == null && typeof arg2 == 'object' && typeof arg3 == 'object') {
     throw new Error('refid must be specified for Upsert Query');
   } else if (typeof arg1 == 'object' && typeof arg2 == 'object') {
@@ -706,17 +711,17 @@ export async function APIUpsert(plugin: PluginDetect, arg1: string | any, arg2: 
     arg2 = CheckQuery(arg2);
     query = arg1;
     update = arg2;
-    signiture.__s = 'plugins';
+    signature.__s = 'plugins';
   } else {
     throw new Error('invalid Upsert query');
   }
 
-  query = { ...query, ...signiture };
+  query = { ...query, ...signature };
 
   if (!get(Object.keys(update), '0', '').startsWith('$')) {
     update = {
       ...update,
-      ...signiture,
+      ...signature,
     };
   }
   return new Promise<any>((resolve, reject) => {

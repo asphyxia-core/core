@@ -34,16 +34,17 @@ block content
                 | Information
             .card-content !{readme}
       .column
-        .card
-          header.card-header
-            p.card-header-title
-              span.icon
-                i.mdi.mdi-gamepad-variant-outline
-              | Game Support
-          .card-content 
-            span.tags
-              each code in gameCodes
-                span.tag.is-primary #{code}
+        if gameCodes && gameCodes.length > 0
+          .card
+            header.card-header
+              p.card-header-title
+                span.icon
+                  i.mdi.mdi-gamepad-variant-outline
+                | Game Support
+            .card-content
+              span.tags
+                each code in gameCodes
+                  span.tag.is-primary #{code}
         if datafile.length
           +files("Data Upload", datafile)
         if config.length

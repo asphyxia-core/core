@@ -93,7 +93,7 @@ declare interface EamuseInfo {
  * Details of a config
  */
 declare interface ConfigOption {
-  /** Provide a name to display in webui. If not provided, webui will use key as the name. */
+  /** Provide a name to display in WebUI. If not provided, WebUI will use key as the name. */
   name?: string;
   /** Provide a description for the option */
   desc?: string;
@@ -112,16 +112,20 @@ declare interface ConfigOption {
 }
 
 /**
- * Details of a datafile
+ * Details of a data file
  */
 declare interface FileOption {
-  /** Provide a name to display in webui. If not provided, webui will use filename as the label. */
+  /** Provide a name to display in WebUI. If not provided, WebUI will use filename as the label. */
   name?: string;
   /** Provide a description for the entry */
   desc?: string;
   /** The accept attribute of the file input element. See [[https://www.w3schools.com/tags/att_input_accept.asp]] */
   accept?: string;
-  /** Whether the file required for the plugin to work, defaults to false */
+  /**
+   * Whether the file is required for the plugin to work, defaults to false.
+   * 
+   * Note that this only provides visual hint for the file in WebUI.
+   */
   required?: boolean;
 }
 
@@ -170,7 +174,7 @@ declare interface EamuseSend {
    * When constructing objects, make sure to use helper [[K]]:
    * ```
    * {
-   *   outter: K.ATTR({ status: "1" }, {
+   *   outer: K.ATTR({ status: "1" }, {
    *     inner: K.ITEM("s32", 1)
    *   })
    * }
@@ -179,7 +183,7 @@ declare interface EamuseSend {
    * Or follow xml-like format manually:
    * ```
    * {
-   *   outter: {
+   *   outer: {
    *     "@attr": { status: "1" },
    *     inner: {
    *       "@attr": { __type: "s32" },
@@ -327,7 +331,7 @@ declare namespace R {
 }
 
 /**
- * A warpper of javascript object for reading xml-like formatted data.
+ * A wrapper of javascript object for reading xml-like formatted data.
  */
 declare class KDataReader {
   /**
@@ -337,7 +341,7 @@ declare class KDataReader {
   constructor(obj: any);
 
   /**
-   * Get attrubutes for a tag
+   * Get attributes for a tag
    *
    * Example:
    * ```xml
@@ -359,7 +363,7 @@ declare class KDataReader {
    * }
    * ```
    *
-   * Evals:
+   * Eval:
    * ```javascript
    * $(data).attr("tag") // { status: "1" }
    * $(data).element("tag").attr().status // "1"
@@ -389,7 +393,7 @@ declare class KDataReader {
    * }
    * ```
    *
-   * Evals:
+   * Eval:
    * ```javascript
    * $(data).element("inner").bigint() // 1n
    * $(data).bigint("inner.1") // 2n
@@ -419,7 +423,7 @@ declare class KDataReader {
    * }
    * ```
    *
-   * Evals:
+   * Eval:
    * ```javascript
    * $(data).bigints("inner") // [1n, 2n]
    * $(data).bigints("invalid") // undefined
@@ -446,7 +450,7 @@ declare class KDataReader {
    * }
    * ```
    *
-   * Evals:
+   * Eval:
    * ```javascript
    * $(data).bool("inner.0") // false
    * $(data).bool("inner.1") // true
@@ -473,7 +477,7 @@ declare class KDataReader {
    * }
    * ```
    *
-   * Evals:
+   * Eval:
    * ```javascript
    * $(data).buffer("inner") // <Buffer 00 ff>
    * $(data).buffer("invalid") // undefined
@@ -500,7 +504,7 @@ declare class KDataReader {
    * }
    * ```
    *
-   * Evals:
+   * Eval:
    * ```javascript
    * $(data).content("number") // [1]
    * $(data).content("array") // [1, 2, 3]
@@ -532,7 +536,7 @@ declare class KDataReader {
    * }
    * ```
    *
-   * Evals:
+   * Eval:
    * ```javascript
    * $(data).element("inner") // <KDataReader>
    * $(data).element("inner").obj // { id: [object] }
@@ -564,7 +568,7 @@ declare class KDataReader {
    * }
    * ```
    *
-   * Evals:
+   * Eval:
    * ```javascript
    * $(data).elements("inner") // [<KDataReader>, <KDataReader>]
    * $(data).elements("inner")[1].number("id") // 2
@@ -593,7 +597,7 @@ declare class KDataReader {
    * }
    * ```
    *
-   * Evals:
+   * Eval:
    * ```javascript
    * $(data).element("inner").number() // 1
    * $(data).number("inner.1") // 2
@@ -623,7 +627,7 @@ declare class KDataReader {
    * }
    * ```
    *
-   * Evals:
+   * Eval:
    * ```javascript
    * $(data).bigints("invalid") // undefined
    * $(data).bigints("inner") // [3, 4]
@@ -649,7 +653,7 @@ declare class KDataReader {
    * }
    * ```
    *
-   * Evals:
+   * Eval:
    * ```javascript
    * $(data).str("inner") // "abc"
    * $(data).str("invalid") // undefined
@@ -808,6 +812,14 @@ declare namespace IO {
   function Resolve(path: string): string;
 
   /**
+   * Synchronously tests whether or not the given path exists by checking with the file system.
+
+   * @param path
+   * A path to a file or directory. If a URL is provided, it must use the file: protocol. URL support is experimental.
+   */
+  function Exists(path: string): boolean;
+
+  /**
    * Asynchronously read a directory.
    * @param path A path to a directory.
    */
@@ -844,11 +856,13 @@ declare namespace IO {
    * If a file descriptor is provided, the underlying file will _not_ be closed automatically.
    * @param options An object that may contain an optional flag.
    * If a flag is not provided, it defaults to `'r'`.
+   * 
+   * Returns null if any error occurs while reading a file
    */
   function ReadFile(
     path: string,
     options: { encoding?: null; flag?: string } | undefined | null
-  ): Promise<Buffer>;
+  ): Promise<Buffer | null>;
 
   /**
    * Asynchronously reads the entire contents of a file.
@@ -856,11 +870,13 @@ declare namespace IO {
    * If a file descriptor is provided, the underlying file will _not_ be closed automatically.
    * @param options Either the encoding for the result, or an object that contains the encoding and an optional flag.
    * If a flag is not provided, it defaults to `'r'`.
+   * 
+   * Returns null if any error occurs while reading a file
    */
   function ReadFile(
     path: string,
     options: { encoding: string; flag?: string } | string
-  ): Promise<string>;
+  ): Promise<string | null>;
 
   /**
    * Asynchronously reads the entire contents of a file.
@@ -868,18 +884,22 @@ declare namespace IO {
    * If a file descriptor is provided, the underlying file will _not_ be closed automatically.
    * @param options Either the encoding for the result, or an object that contains the encoding and an optional flag.
    * If a flag is not provided, it defaults to `'r'`.
+   * 
+   * Returns null if any error occurs while reading a file
    */
   function ReadFile(
     path: string,
     options: { encoding?: string | null; flag?: string } | string | undefined | null
-  ): Promise<string | Buffer>;
+  ): Promise<string | Buffer | null>;
 
   /**
    * Asynchronously reads the entire contents of a file.
    * @param path A path to a file.
    * If a file descriptor is provided, the underlying file will _not_ be closed automatically.
+   * 
+   * Returns null if any error occurs while reading a file.
    */
-  function ReadFile(path: string): Promise<Buffer>;
+  function ReadFile(path: string): Promise<Buffer | null>;
 }
 
 /**
@@ -908,6 +928,22 @@ declare namespace U {
    * @param key
    */
   function GetConfig(key: string): any;
+
+  /**
+   * Convert Card Number / Data Transfer Number to NFC serial
+   * 
+   * returns null if the card number is invalid
+   * @param card Card Number / Data Transfer Number
+   */
+  function Card2NFC(card: string): string | null;
+
+  /**
+   * Convert NFC serial to Card Number or Data Transfer Number
+   * 
+   * returns null if the nfc serial is invalid
+   * @param card Card Number or Data Transfer Number
+   */
+  function NFC2Card(nfc: string): string | null;
 }
 
 /** @ignore */
@@ -1011,7 +1047,7 @@ type Update<T> = Partial<T> & {
  * ---
  *
  * **NOTE**: since WebUI can delete data in __ProfileSpace__,
- * you should refrain from referencing refid in your document to prevent getting unclearable garbage data.
+ * you should refrain from referencing refid in your document to prevent getting residual garbage data.
  *
  * If you need to make rival/friend feature, we recommend you to get all profile data by passing null to `refid`.
  * There will be 16 profiles maximum which is small enough to manage.

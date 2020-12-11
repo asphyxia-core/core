@@ -42,7 +42,8 @@ mixin form_control(option)
             label.switch.is-rounded
               input(type='checkbox' name=option.key checked=option.current)
               span.check
-        p.help #{option.desc}
+        if option.desc
+          p.help #{option.desc}
 
 mixin form(name, options)
   .card
@@ -66,7 +67,7 @@ mixin form(name, options)
             button.button.is-link(type='submit') Apply
 
 mixin file_control(option)
-  .field.is-horizontal
+  .field.is-horizontal.no-bottom
     .field-label(class=(option.type != 'boolean') ? "is-normal" : "")
       label.label(for=option.key) #{option.name}
     .field-body
@@ -106,11 +107,15 @@ mixin file_control(option)
                   span.icon
                     i.mdi.mdi-upload
         if option.uploaded
-          p.control
+          .control
             button.data-delete.button.is-danger(deleting=option.path)
               span.icon
                 i.mdi.mdi-trash-can
               span Clear
+  .field.is-horizontal
+    .field-label
+    .field-body
+      if option.desc
         p.help #{option.desc}
 
 mixin files(name, options)

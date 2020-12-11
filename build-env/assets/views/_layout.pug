@@ -11,7 +11,7 @@ mixin li_plugin(icon, label, link, pages)
     a.has-icon.has-dropdown-icon(class=(plugin == link) ? 'is-active' : '' href='/plugin/' + link)
       span.icon
         i.mdi(class='mdi-'+icon)
-      span.menu-item-label #{label}
+      span.menu-item-label.expandable #{label}
       .dropdown-icon
         span.icon.plus
           i.mdi.mdi-plus
