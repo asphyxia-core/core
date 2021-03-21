@@ -3,6 +3,7 @@
     "module": "commonjs",
     "target": "es5",
     "noImplicitAny": false,
+    "downlevelIteration": true,
     "moduleResolution": "node",
     "types": ["./asphyxia-core"],
     "sourceMap": false
