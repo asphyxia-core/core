@@ -102,9 +102,14 @@ export function LoadExternalPlugins() {
   const ts_node = require('ts-node');
   if (existsSync(tsconfig)) {
     /* Inject ts-node */
-    ts_node.register({ project: tsconfig, transpileOnly: ARGS.dev ? false : true });
+    ts_node.register({
+      project: tsconfig,
+      typeCheck: false,
+      files: false,
+      transpileOnly: ARGS.dev ? false : true,
+    });
   } else {
-    ts_node.register({ transpileOnly: ARGS.dev ? false : true });
+    ts_node.register({ typeCheck: false, files: false, transpileOnly: ARGS.dev ? false : true });
   }
 
   $.$ = (data: any) => {

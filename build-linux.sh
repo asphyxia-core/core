@@ -2,12 +2,7 @@
 
 mkdir -p build
 
-regex='VERSION = '"'"'(.*)'"'"''
-[[ $(cat ./src/util/Consts.ts) =~ $regex ]]
-
-VERSION=${BASH_REMATCH[1]}
-
-echo "Building Version $VERSION for arm64"
+echo "Building Linux Version"
 
 echo "NPM Install"
 npm ci
@@ -25,12 +20,12 @@ cp -r typescript ./node_modules/
 
 echo "Packing binaries"
 cd ..
-npx pkg ./build-env -t node10.15.3-linux-armv7 -o ./build/asphyxia-core --options no-warnings
+npx pkg ./build-env -t node12.16.1-linux-x64 -o ./build/asphyxia-core --options no-warnings
 
 echo "Compressing"
 
-rm -f ./build/asphyxia-core-armv7.zip
+rm -f ./build/asphyxia-core-linux-x64.zip
 cd build
-zip -qq asphyxia-core-armv7.zip asphyxia-core
+zip -qq asphyxia-core-linux-x64.zip asphyxia-core
 cd ..
 zip -qq -r plugins

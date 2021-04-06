@@ -18,10 +18,10 @@ jobs:
 
           # Set an output parameter `uname` for use in subsequent steps
           run: |
-            apt update
-            apt install -y nodejs npm
+            curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+            apt install -y nodejs
             bash build-arm.sh
       - uses: actions/upload-artifact@v2
         with:
-          name: core-artifact-x86
+          name: core-artifact-arm
           path: build/*.zip
