@@ -1,7 +1,31 @@
-name: Build arm version
+name: Build Linux version
 on: [push]
 jobs:
-  build:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.16.1'
+      - run: bash build-linux.sh
+      - uses: actions/upload-artifact@v2
+        with:
+          name: core-artifact-linux
+          path: build/*.zip
+  build-win:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.16.1'
+      - run: pwsh build-win.ps1
+      - uses: actions/upload-artifact@v2
+        with:
+          name: core-artifact-windows
+          path: build/*.zip
+  build-arm:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -19,7 +43,7 @@ jobs:
           # Set an output parameter `uname` for use in subsequent steps
           run: |
             apt update
-            apt install -y curl
+            apt install -y curl zip
             curl -sL https://deb.nodesource.com/setup_12.x | bash -
             apt install -y nodejs
             bash build-arm.sh
