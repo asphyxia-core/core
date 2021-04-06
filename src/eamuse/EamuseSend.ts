@@ -84,7 +84,10 @@ export class EamuseSend {
         data = kencode(result, encoding, true);
       } catch (err) {
         if (err && err.path && isArray(err.path)) {
-          Logger.error(new Error(`kencode failed: parsing error at '${err.path.join('.')}'`) as any, { plugin });
+          Logger.error(
+            new Error(`kencode failed: parsing error at '${err.path.join('.')}'`) as any,
+            { plugin }
+          );
         } else {
           Logger.error(new Error('kencode failed: unknown error') as any, { plugin });
         }
@@ -123,7 +126,7 @@ export class EamuseSend {
   xml(template: string, data?: any, options?: EamuseSendOption) {
     const plugin = GetCallerPlugin();
     if (!plugin) {
-      Logger.error(`send unexpected error`);
+      Logger.error(`Unexpected error during send`);
       return this.object({}, { status: 1 });
     }
 
@@ -140,7 +143,7 @@ export class EamuseSend {
   pug(template: string, data?: any, options?: EamuseSendOption) {
     const plugin = GetCallerPlugin();
     if (!plugin) {
-      Logger.error(`send unexpected error`);
+      Logger.error(`Unexpected error during send`);
       return this.object({}, { status: 1 });
     }
 
@@ -158,7 +161,7 @@ export class EamuseSend {
   xmlFile(template: string, data?: any, options?: EamuseSendOption) {
     const plugin = GetCallerPlugin();
     if (!plugin) {
-      Logger.error(`send unexpected error`);
+      Logger.error(`Unexpected error during send`);
       return this.object({}, { status: 1 });
     }
 
@@ -177,7 +180,7 @@ export class EamuseSend {
   pugFile(template: string, data?: any, options?: EamuseSendOption) {
     const plugin = GetCallerPlugin();
     if (!plugin) {
-      Logger.error(`send unexpected error`);
+      Logger.error(`Unexpected error during send`);
       return this.object({}, { status: 1 });
     }
 

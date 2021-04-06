@@ -10,6 +10,7 @@ build-env/*
 !build-env/typescript/
 !build-env/pkg-cache
 !build-env/package.json
+!build-env/package-lock.json
 
 .vscode
 .vs

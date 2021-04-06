@@ -204,7 +204,7 @@ webui.get(
 webui.get(
   '/profiles',
   wrap(async (req, res) => {
-    const profiles = await GetProfiles();
+    const profiles = (await GetProfiles()) || [];
     for (const profile of profiles) {
       profile.cards = await Count({ __s: 'card', __refid: profile.__refid });
     }
@@ -259,7 +259,7 @@ webui.delete(
 
 webui.post(
   '/profile/:refid/card',
-  json(),
+  json({ limit: '50mb' }),
   wrap(async (req, res) => {
     const refid = req.params['refid'];
     const card = req.body.cid;
@@ -292,7 +292,7 @@ webui.post(
 
 webui.post(
   '/profile/:refid',
-  urlencoded({ extended: true }),
+  urlencoded({ extended: true, limit: '50mb' }),
   wrap(async (req, res) => {
     const refid = req.params['refid'];
     const update: any = {};
@@ -337,7 +337,7 @@ webui.get(
 
 webui.post(
   '/data/db',
-  json(),
+  json({ limit: '50mb' }),
   wrap(async (req, res, next) => {
     if (!ARGS.dev) {
       next();
@@ -630,7 +630,7 @@ webui.get(
 // General setting update
 webui.post(
   '*',
-  urlencoded({ extended: true }),
+  urlencoded({ extended: true, limit: '50mb' }),
   wrap(async (req, res) => {
     const page = req.query.page;
 

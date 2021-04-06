@@ -1,10 +1,11 @@
-## v1.30a
+## v1.30c
 
 - **CORE**: Fixed an issue where the command line options are ignored
 - **PluginLoader**: Fixed an error during card-in if the current gamecode is not registered by any plugins
 - **Misc**: Upgrade TypeScript to 4.2.3
-- **Misc**: Plugins are now targeting es5 to make sure TypeScript correctly transpile newer ES features for NodeJS 10 and 12
-
+- **Misc**: Plugins are now targeting es2017 to make sure TypeScript correctly transpile newer ES features for NodeJS 10 and 12
+- **PluginLoader**: Migrate to new database files, now each database has it's own db file. Please backup your old `savedata.db`
+- **WebUI**: Emit handlers now take body size up to 50M
 
 ## v1.20f
 

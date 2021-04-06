@@ -2,7 +2,7 @@ import { ArgumentParser } from 'argparse';
 import { VERSION } from './Consts';
 
 import { Logger } from './Logger';
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, accessSync } from 'fs';
 import { parse, stringify } from 'ini';
 import path from 'path';
 
@@ -18,7 +18,6 @@ const parser = new ArgumentParser({
 
 parser.addArgument(['-p', '--port'], {
   help: 'Set listening port. (default: 8083)',
-  defaultValue: 8083,
   type: 'int',
   metavar: 'PORT',
   dest: 'port',
@@ -26,14 +25,12 @@ parser.addArgument(['-p', '--port'], {
 
 parser.addArgument(['-b', '--bind'], {
   help: 'Hostname binding. In case you need to access it through LAN. (default: "localhost")',
-  defaultValue: 'localhost',
   metavar: 'HOST',
   dest: 'bind',
 });
 
 parser.addArgument(['-m', '--matching-port'], {
   help: 'Set matching port. (default: 5700)',
-  defaultValue: 5700,
   type: 'int',
   dest: 'matching_port',
   metavar: 'PORT',
@@ -55,7 +52,7 @@ parser.addArgument(['--force-load-db'], {
 
 parser.addArgument(['-d', '--savedata-dir'], {
   help: 'Change savedata directory',
-  defaultValue: '.',
+  defaultValue: 'savedata',
   dest: 'savedata',
 });
 
@@ -132,21 +129,21 @@ CoreConfig();
 
 export function PluginRegisterConfig(plugin: string, key: string, options: CONFIG_OPTIONS) {
   if (!options) {
-    Logger.error(`failed to register config entry ${key}: config options not specified`, {
+    Logger.error(`Failed to register config entry ${key}: config options not specified`, {
       plugin,
     });
     return;
   }
 
   if (options.default == null) {
-    Logger.error(`failed to register config entry ${key}: default value not specified`, {
+    Logger.error(`Failed to register config entry ${key}: default value not specified`, {
       plugin,
     });
     return;
   }
 
   if (!options.type == null) {
-    Logger.error(`failed to register config entry ${key}: value type not specified`, {
+    Logger.error(`Failed to register config entry ${key}: value type not specified`, {
       plugin,
     });
     return;
@@ -232,7 +229,7 @@ export function SaveConfig() {
   try {
     writeFileSync(CONFIG_PATH, stringify(INI));
   } catch (err) {
-    Logger.error(`failed to write config: ${err}`);
+    Logger.error(`Failed to write config: ${err}`);
   }
 }
 

@@ -8,37 +8,42 @@ import { DATAFILE_MAP } from '../utils/ArgConfig';
 
 export const ajax = Router();
 
-ajax.post('/emit/:event', urlencoded({ extended: true }), json(), async (req, res) => {
-  if (!req.headers.referer) {
-    res.sendStatus(400);
-    return;
+ajax.post(
+  '/emit/:event',
+  urlencoded({ extended: true, limit: '50mb' }),
+  json({ limit: '50mb' }),
+  async (req, res) => {
+    if (!req.headers.referer) {
+      res.sendStatus(400);
+      return;
+    }
+
+    const match = req.headers.referer.match(/\/plugin\/([^\/]*)(?:\/.*)*$/);
+    if (!match) {
+      res.sendStatus(400);
+      return;
+    }
+
+    const plugin = ROOT_CONTAINER.getPluginByID(match[1]);
+    if (!plugin) {
+      res.sendStatus(404);
+      return;
+    }
+
+    const event = req.params.event;
+
+    try {
+      await plugin.CallEvent(event, req.body);
+    } catch (err) {
+      Logger.error(`WebUIEvent Error: ${event}`);
+      Logger.error(err, { plugin: plugin.Identifier });
+      res.status(500).send(err);
+      return;
+    }
+
+    res.redirect(req.headers.referer);
   }
-
-  const match = req.headers.referer.match(/\/plugin\/([^\/]*)(?:\/.*)*$/);
-  if (!match) {
-    res.sendStatus(400);
-    return;
-  }
-
-  const plugin = ROOT_CONTAINER.getPluginByID(match[1]);
-  if (!plugin) {
-    res.sendStatus(404);
-    return;
-  }
-
-  const event = req.params.event;
-
-  try {
-    await plugin.CallEvent(event, req.body);
-  } catch (err) {
-    Logger.error(`WebUIEvent Error: ${event}`);
-    Logger.error(err, { plugin: plugin.Identifier });
-    res.status(500).send(err);
-    return;
-  }
-
-  res.redirect(req.headers.referer);
-});
+);
 
 var storage = multer.memoryStorage();
 var upload = multer({ storage: storage });

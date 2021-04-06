@@ -1,0 +1,15 @@
+name: Build x86 version
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.16.1'
+      - run: bash build-x86.sh
+      - uses: actions/upload-artifact@v2
+        with:
+          name: core-artifact-x86
+          path: build/*.zip

@@ -85,7 +85,7 @@ export const EamuseMiddleware: RequestHandler = async (req, res, next) => {
     }
 
     if (!body) {
-      Logger.error(`failed to decompress message by ${agent}`);
+      Logger.error(`Failed to decompress message by ${agent}`);
       res.sendStatus(404);
       return;
     }
@@ -105,7 +105,7 @@ export const EamuseMiddleware: RequestHandler = async (req, res, next) => {
         kencoded = true;
       }
     } catch (err) {
-      Logger.error(`failed to parse message by ${agent}`);
+      Logger.error(`Failed to parse message by ${agent}`);
     }
 
     if (xml == null) {

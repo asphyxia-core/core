@@ -2,15 +2,16 @@ import { existsSync, mkdirSync, readFileSync, writeFile, readFile, readdir, unli
 
 import { Logger } from './Logger';
 import path from 'path';
-import nedb from 'nedb';
+import nedb from 'nedb-promises';
 import { nfc2card } from './CardCipher';
 import hashids from 'hashids/cjs';
 import { NAMES } from './Consts';
 import { CONFIG, ARGS } from './ArgConfig';
-import { isArray, get, groupBy, isPlainObject } from 'lodash';
-import { sizeof } from 'sizeof';
+import { isArray, get, isPlainObject, sortBy } from 'lodash';
 import { PluginDetect } from '../eamuse/ExternalPluginLoader';
 import { ROOT_CONTAINER } from '../eamuse';
+import { promises as fsp } from 'fs';
+import prettyBytes from 'pretty-bytes';
 
 const pkg: boolean = (process as any).pkg;
 const EXEC_PATH = path.resolve(pkg ? path.dirname(process.argv0) : process.cwd());
@@ -18,63 +19,91 @@ const EXEC_PATH = path.resolve(pkg ? path.dirname(process.argv0) : process.cwd()
 export const PLUGIN_PATH = path.join(EXEC_PATH, 'plugins');
 export const ASSETS_PATH = path.join(pkg ? __dirname : `../build-env`, 'assets');
 
-const SAVE_PATH = path.join(EXEC_PATH, 'savedata.db');
+const SAVE_PATH = path.resolve(EXEC_PATH, ARGS.savedata);
+const COREDB_FILE = path.join(SAVE_PATH, 'core.db');
 
-const DB = new nedb({
-  filename: SAVE_PATH,
-  timestampData: true,
-  corruptAlertThreshold: ARGS.fixdb ? 0.2 : 0,
-});
+const LoadDatabase = async (file: string) => {
+  const DB = nedb.create({
+    filename: file,
+    timestampData: true,
+    corruptAlertThreshold: ARGS.fixdb ? 0.2 : 0,
+  });
 
-DB.loadDatabase(err => {
-  if (err) {
-    if (err.message && err.message.startsWith('More than')) {
-      if (ARGS.fixdb) {
-        Logger.error(
-          'Savedata is more than 20% corrupted. Which means the savedata might be beyond repair.'
-        );
+  const filename = path.basename(file);
+  try {
+    await DB.load();
+    if (filename != 'core.db') Logger.info(`Database loaded: ${filename}`, { plugin: 'db' });
+  } catch (err) {
+    if (err) {
+      if (err.message && err.message.startsWith('More than')) {
+        if (ARGS.fixdb) {
+          Logger.error(
+            `Savedata "${filename}" is more than 20% corrupted. Which means the savedata might be beyond repair. Please delete the savefile in order to keep using CORE.`
+          );
+          process.exit(1);
+        } else {
+          Logger.error(
+            `Savedata "${filename}" corruption detected. Run with "--force-load-db" argument to force load data, and corrupted portion will be discarded. It is recommended to backup savedata before force loading.`
+          );
+          process.exit(1);
+        }
       } else {
-        Logger.error(
-          'Savedata corruption detected. Run with "--force-load-db" argument to force load data, and corrupted portion will be discarded. It is recommended to backup savedata.db before force loading.'
-        );
+        Logger.error(`Can not load database "${filename}":`);
+        Logger.error(err);
       }
-    } else {
-      Logger.error(err);
     }
+    return null;
+  }
 
+  const value = await DB.count({ __s: 'profile' });
+  if (value < 0) {
+    Logger.error('Profile indexes is corrupted. Can not load database.');
     process.exit(1);
   }
 
-  GetProfileCount().then(value => {
-    if (value < 0) {
-      Logger.error('Profile indexes is corrupted. Can not start NeDB.');
-      process.exit(1);
+  if (value > 16) {
+    Logger.error('Profile table is corrupted. Can not load database.');
+    process.exit(1);
+  }
+
+  try {
+    await DB.ensureIndex({ fieldName: '__s' });
+    await DB.ensureIndex({ fieldName: '__refid' });
+  } catch (err) {
+    Logger.error(err);
+  }
+
+  try {
+    await DB.remove({ __s: 'plugins_profile', __refid: { $exists: false } }, { multi: true });
+  } catch (err) {
+    Logger.error(err);
+  }
+
+  return DB;
+};
+
+let CoreDB: nedb = null;
+export const LoadCoreDB = async () => {
+  CoreDB = await LoadDatabase(COREDB_FILE);
+
+  if (!CoreDB) {
+    process.exit(1);
+  }
+};
+
+const DBInstances: { [key: string]: nedb } = {};
+
+const GET_DB = async (affiliation: string) => {
+  if (!DBInstances[affiliation]) {
+    DBInstances[affiliation] = await LoadDatabase(path.join(SAVE_PATH, `${affiliation}.db`));
+    if (!DBInstances[affiliation]) {
+      delete DBInstances[affiliation];
+      return null;
     }
+  }
 
-    if (value > 16) {
-      Logger.error('Profile table is corrupted. Can not start NeDB.');
-      process.exit(1);
-    }
-
-    DB.ensureIndex({ fieldName: '__s' }, function (err) {
-      if (err) {
-        Logger.error(err);
-      }
-    });
-
-    DB.ensureIndex({ fieldName: '__a' }, function (err) {
-      if (err) {
-        Logger.error(err);
-      }
-    });
-
-    DB.ensureIndex({ fieldName: '__refid' }, function (err) {
-      if (err) {
-        Logger.error(err);
-      }
-    });
-  });
-});
+  return DBInstances[affiliation];
+};
 
 const ID_GEN = new hashids('AsphyxiaCORE', 15, '0123456789ABCDEF');
 
@@ -115,7 +144,7 @@ export async function ReadDir(plugin: PluginDetect, file: string) {
   return new Promise<{ name: string; type: 'file' | 'dir' | 'unsupported' }[]>(resolve => {
     readdir(target, { encoding: 'utf8', withFileTypes: true }, (err, files) => {
       if (err) {
-        Logger.error(`file writing failed: ${err}`, { plugin });
+        Logger.error(`File writing failed: ${err}`, { plugin });
         return resolve([]);
       }
       resolve(
@@ -147,14 +176,14 @@ export async function WriteFile(
     if (options == null) {
       writeFile(target, data, err => {
         if (err) {
-          Logger.error(`file writing failed: ${err}`, { plugin });
+          Logger.error(`File writing failed: ${err}`, { plugin });
         }
         resolve();
       });
     } else {
       writeFile(target, data, options, err => {
         if (err) {
-          Logger.error(`file writing failed: ${err}`, { plugin: plugin });
+          Logger.error(`File writing failed: ${err}`, { plugin: plugin });
         }
         resolve();
       });
@@ -168,7 +197,7 @@ export async function DeleteFile(plugin: PluginDetect, file: string) {
   return new Promise<void>(resolve => {
     unlink(target, err => {
       if (err) {
-        Logger.error(`file writing failed: ${err}`, { plugin });
+        Logger.error(`File writing failed: ${err}`, { plugin });
       }
       resolve();
     });
@@ -186,7 +215,7 @@ export async function ReadFile(
     if (options == null) {
       readFile(target, (err, data) => {
         if (err) {
-          Logger.error(`file reading failed: ${err}`, { plugin: plugin });
+          Logger.error(`File reading failed: ${err}`, { plugin: plugin });
           return resolve(null);
         }
         return resolve(data);
@@ -194,7 +223,7 @@ export async function ReadFile(
     } else {
       readFile(target, options, (err, data) => {
         if (err) {
-          Logger.error(`file reading failed: ${err}`, { plugin: plugin });
+          Logger.error(`File reading failed: ${err}`, { plugin: plugin });
           return resolve(null);
         }
         return resolve(data);
@@ -208,138 +237,114 @@ export async function ReadFile(
 // =========================================
 
 export async function GetUniqueInt() {
-  return new Promise<number>(resolve => {
-    DB.findOne(
+  try {
+    const doc = await CoreDB.findOne<any>({
+      __s: 'counter',
+    });
+    const result = doc ? doc.value : 0;
+    await CoreDB.update(
       {
         __s: 'counter',
       },
-      (err, doc) => {
-        if (err) return resolve(-1);
-        const result = doc ? doc.value : 0;
-        DB.update(
-          {
-            __s: 'counter',
-          },
-          { $inc: { value: 1 } },
-          { upsert: true },
-          err => {
-            if (err) resolve(-1);
-            else resolve(result);
-          }
-        );
-      }
+      { $inc: { value: 1 } },
+      { upsert: true }
     );
-  });
+    return result;
+  } catch (err) {
+    Logger.error(err);
+    return -1;
+  }
 }
 
-export async function PluginStats() {
-  return new Promise<
-    {
-      name: string;
-      id: string;
-      dataSize: string;
-    }[]
-  >(resolve => {
-    DB.find({
-      __s: { $in: ['plugins', 'plugins_profile'] },
-    }).exec((err, res) => {
-      if (err) {
-        resolve([]);
-        return;
-      }
+export async function PluginStats(): Promise<
+  {
+    name: string;
+    id: string;
+    dataSize: string;
+    hasData: boolean;
+  }[]
+> {
+  const list = await fsp.readdir(SAVE_PATH);
+  const result = [];
 
-      const group = groupBy(res, '__a');
-      const stats = [];
-      for (const plugin of Object.keys(group).sort()) {
-        stats.push({
-          name: plugin.split('@')[0].toUpperCase(),
-          id: plugin,
-          dataSize: sizeof(group[plugin], true),
-        });
-      }
+  for (const installed of ROOT_CONTAINER.Plugins.map(e => e.Identifier)) {
+    if (list.indexOf(`${installed}.db`) <= 0) {
+      result.push({
+        name: installed.split('@')[0].toUpperCase(),
+        id: installed,
+        dataSize: 'No Data',
+        hasData: false,
+      });
+    }
+  }
 
-      for (const installed of ROOT_CONTAINER.Plugins.map(e => e.Identifier)) {
-        if (!group[installed]) {
-          stats.push({
-            name: installed.split('@')[0].toUpperCase(),
-            id: installed,
-            dataSize: '0B',
-          });
-        }
-      }
-      resolve(stats);
-    });
-  });
+  for (const savefile of list) {
+    if (savefile.startsWith('_') || savefile.startsWith('.') || savefile.startsWith('core')) {
+      continue;
+    }
+
+    try {
+      const filestat = await fsp.stat(path.join(SAVE_PATH, savefile));
+
+      const basename = path.basename(savefile, '.db');
+      result.push({
+        name: basename.split('@')[0].toUpperCase(),
+        id: basename,
+        dataSize: prettyBytes(filestat.size),
+        hasData: true,
+      });
+    } catch (err) {
+      Logger.error(`Cannot read savefile ${savefile}:`);
+      Logger.error(err);
+    }
+  }
+
+  return sortBy(result, 'id');
 }
 
 export async function PurgePlugin(affiliation: string) {
-  return new Promise<boolean>(resolve => {
-    DB.remove(
-      {
-        __a: affiliation,
-      },
-      { multi: true },
-      (err, res) => {
-        if (err) resolve(false);
-        else resolve(true);
-      }
-    );
-  });
+  try {
+    if (DBInstances[affiliation]) {
+      delete DBInstances[affiliation];
+    }
+    await fsp.unlink(path.join(SAVE_PATH, `${affiliation}.db`));
+  } catch (err) {
+    Logger.error(`Cannot delete savefile ${affiliation}.db:`);
+    Logger.error(err);
+  }
 }
 
 export async function Count(doc: any) {
-  return new Promise<number>(resolve => {
-    DB.count(doc, (err, n) => {
-      if (err) resolve(-1);
-      else resolve(n);
-    });
-  });
+  try {
+    return await CoreDB.count(doc);
+  } catch (err) {
+    Logger.error(err);
+    return -1;
+  }
 }
 
 export async function GetProfileCount() {
-  return new Promise<number>(resolve => {
-    DB.count(
-      {
-        __s: 'profile',
-      },
-      (err, n) => {
-        if (err) resolve(-1);
-        else resolve(n);
-      }
-    );
-  });
+  return await Count({ __s: 'profile' });
 }
 
 export async function FindCard(cid: string) {
-  return new Promise<any>(resolve => {
-    DB.findOne(
-      {
-        __s: 'card',
-        cid,
-      },
-      (err, res) => {
-        if (err) resolve(false);
-        else resolve(res);
-      }
-    );
-  });
+  try {
+    return await CoreDB.findOne<any>({ __s: 'card', cid });
+  } catch (err) {
+    Logger.error(err);
+    return false;
+  }
 }
 
 export async function FindCardsByRefid(refid: string) {
-  return new Promise<any>(resolve => {
-    DB.find(
-      {
-        __s: 'card',
-        __refid: refid,
-      },
-      {}
-    )
+  try {
+    return await CoreDB.find<any>({ __s: 'card', __refid: refid })
       .sort({ createdAt: 1 })
-      .exec((err, res) => {
-        if (err) resolve(false);
-        else resolve(res);
-      });
-  });
+      .exec();
+  } catch (err) {
+    Logger.error(err);
+    return false;
+  }
 }
 
 export async function CreateCard(cid: string, refid: string, forcePrint?: string) {
@@ -355,36 +360,34 @@ export async function CreateCard(cid: string, refid: string, forcePrint?: string
     }
   }
 
-  return new Promise<any>(resolve => {
-    DB.insert({ __s: 'card', __refid: refid, print, cid }, (err, doc) => {
-      if (err) resolve(false);
-      else resolve(doc);
-    });
-  });
+  try {
+    return await CoreDB.insert<any>({ __s: 'card', __refid: refid, print, cid });
+  } catch (err) {
+    Logger.error(err);
+    return false;
+  }
 }
 
 export async function DeleteCard(cid: string) {
-  return new Promise<boolean>(resolve => {
-    DB.remove({ __s: 'card', cid }, { multi: true }, err => {
-      if (err) resolve(false);
-      else resolve(true);
-    });
-  });
+  try {
+    await CoreDB.remove({ __s: 'card', cid }, { multi: true });
+    return true;
+  } catch (err) {
+    Logger.error(err);
+    return false;
+  }
 }
 
 export async function FindProfile(refid: string) {
-  return new Promise<any>(resolve => {
-    DB.findOne(
-      {
-        __s: 'profile',
-        __refid: refid,
-      },
-      (err, res) => {
-        if (err) resolve(false);
-        else resolve(res);
-      }
-    );
-  });
+  try {
+    return await CoreDB.findOne<any>({
+      __s: 'profile',
+      __refid: refid,
+    });
+  } catch (err) {
+    Logger.error(err);
+    return false;
+  }
 }
 
 export async function CreateProfile(pin: string, gameCode: string) {
@@ -394,28 +397,25 @@ export async function CreateProfile(pin: string, gameCode: string) {
   if (count < 0) return false;
 
   const refid = 'A' + ID_GEN.encode(count * 16 + Math.floor(Math.random() * 16));
-
   const name = NAMES[Math.floor(Math.random() * NAMES.length)];
-  return new Promise<any>(resolve => {
-    DB.insert(
-      {
-        __s: 'profile',
-        __refid: refid,
-        pin,
-        name,
-        models: [gameCode],
-      },
-      (err, doc) => {
-        if (err) resolve(false);
-        else resolve(doc);
-      }
-    );
-  });
+
+  try {
+    return await CoreDB.insert({
+      __s: 'profile',
+      __refid: refid,
+      pin,
+      name,
+      models: [gameCode],
+    });
+  } catch (err) {
+    Logger.error(err);
+    return false;
+  }
 }
 
 export async function UpdateProfile(refid: string, update: any, upsert: boolean = false) {
-  return new Promise<boolean>(resolve => {
-    DB.update(
+  try {
+    await CoreDB.update(
       {
         __s: 'profile',
         __refid: refid,
@@ -423,55 +423,70 @@ export async function UpdateProfile(refid: string, update: any, upsert: boolean 
       {
         $set: update,
       },
-      { upsert },
-      err => {
-        if (err) resolve(false);
-        else resolve(true);
-      }
+      { upsert }
     );
-  });
+    return true;
+  } catch (err) {
+    Logger.error(err);
+    return false;
+  }
 }
 
 export async function PurgeProfile(refid: string) {
-  return new Promise<boolean>(resolve => {
-    DB.remove({ __refid: refid }, { multi: true }, err => {
-      if (err) resolve(false);
-      else resolve(true);
-    });
-  });
+  try {
+    await CoreDB.remove({ __refid: refid }, { multi: true });
+  } catch (err) {
+    Logger.error(err);
+    return false;
+  }
+
+  const list = await fsp.readdir(SAVE_PATH);
+  for (const savefile of list) {
+    if (savefile.startsWith('_') || savefile.startsWith('.') || savefile.startsWith('core')) {
+      continue;
+    }
+
+    const affiliation = path.basename(savefile, '.db');
+
+    const DB = await GET_DB(affiliation);
+    if (DB) {
+      try {
+        await DB.remove({ __refid: refid }, { multi: true });
+      } catch (err) {
+        Logger.error(err);
+      }
+    }
+  }
+
+  return true;
 }
 
 export async function BindProfile(refid: string, gameCode: string) {
-  return new Promise<any>(resolve => {
-    DB.update(
+  try {
+    return await CoreDB.update(
       {
         __s: 'profile',
         __refid: refid,
       },
-      { $addToSet: { models: gameCode } },
-      {},
-      (err, doc) => {
-        if (err) resolve(false);
-        else resolve(doc);
-      }
+      { $addToSet: { models: gameCode } }
     );
-  });
+  } catch (err) {
+    Logger.error(err);
+    return false;
+  }
 }
 
 export async function GetProfiles() {
-  return new Promise<any>(resolve => {
-    DB.find(
-      {
-        __s: 'profile',
-      },
-      {}
-    )
+  try {
+    return (await CoreDB.find<any>({
+      __s: 'profile',
+    })
       .sort({ createdAt: 1 })
-      .exec((err, doc) => {
-        if (err) resolve(false);
-        else resolve(doc);
-      });
-  });
+      .exec()) as any[];
+  } catch (err) {
+    Logger.error(err);
+    return false;
+  }
 }
 
 // Public API
@@ -507,7 +522,6 @@ export async function APIFindOne(plugin: PluginDetect, arg1: string | any, arg2?
     query = {
       ...arg2,
       __s: 'plugins_profile',
-      __a: plugin.name,
       __refid: arg1,
     };
   } else if (arg1 == null && typeof arg2 == 'object') {
@@ -515,35 +529,28 @@ export async function APIFindOne(plugin: PluginDetect, arg1: string | any, arg2?
     query = {
       ...arg2,
       __s: 'plugins_profile',
-      __a: plugin.name,
     };
   } else if (typeof arg1 == 'object') {
     arg1 = CheckQuery(arg1);
     query = {
       ...arg1,
       __s: 'plugins',
-      __a: plugin.name,
     };
   } else {
     throw new Error('invalid FindOne query');
   }
 
-  return new Promise<any>((resolve, reject) => {
-    DB.findOne(
-      query,
-      plugin.core
-        ? {}
-        : {
-            __s: 0,
-            __a: 0,
-            __collection: 0,
-          },
-      (err, doc) => {
-        if (err) reject(err);
-        else resolve(doc);
-      }
-    );
-  });
+  const DB = await GET_DB(plugin.name);
+  if (!DB) throw new Error(`database failed to load`);
+  return await DB.findOne(
+    query,
+    plugin.core
+      ? {}
+      : {
+          __s: 0,
+          __collection: 0,
+        }
+  );
 }
 
 export async function APIFind(plugin: PluginDetect, arg1: string | any, arg2?: any) {
@@ -553,7 +560,6 @@ export async function APIFind(plugin: PluginDetect, arg1: string | any, arg2?: a
     query = {
       ...arg2,
       __s: 'plugins_profile',
-      __a: plugin.name,
       __refid: arg1,
     };
   } else if (arg1 == null && typeof arg2 == 'object') {
@@ -561,36 +567,31 @@ export async function APIFind(plugin: PluginDetect, arg1: string | any, arg2?: a
     query = {
       ...arg2,
       __s: 'plugins_profile',
-      __a: plugin.name,
     };
   } else if (typeof arg1 == 'object') {
     arg1 = CheckQuery(arg1);
     query = {
       ...arg1,
       __s: 'plugins',
-      __a: plugin.name,
     };
   } else {
     throw new Error('invalid Find query');
   }
 
-  return new Promise<any>((resolve, reject) => {
-    DB.find(
-      query,
-      plugin.core
-        ? {}
-        : {
-            __s: 0,
-            __a: 0,
-            __collection: 0,
-          }
-    )
-      .sort({ createdAt: 1 })
-      .exec((err, doc) => {
-        if (err) reject(err);
-        else resolve(doc);
-      });
-  });
+  const DB = await GET_DB(plugin.name);
+  if (!DB) throw new Error(`database failed to load`);
+
+  return (await DB.find<any>(
+    query,
+    plugin.core
+      ? {}
+      : {
+          __s: 0,
+          __collection: 0,
+        }
+  )
+    .sort({ createdAt: 1 })
+    .exec()) as any[];
 }
 
 export async function APIInsert(plugin: PluginDetect, arg1: string | any, arg2?: any) {
@@ -607,7 +608,6 @@ export async function APIInsert(plugin: PluginDetect, arg1: string | any, arg2?:
     doc = {
       ...arg2,
       __s: 'plugins_profile',
-      __a: plugin.name,
       __refid: arg1,
     };
   } else if (arg1 == null && typeof arg2 == 'object') {
@@ -617,24 +617,22 @@ export async function APIInsert(plugin: PluginDetect, arg1: string | any, arg2?:
     doc = {
       ...arg1,
       __s: 'plugins',
-      __a: plugin.name,
     };
   } else {
     throw new Error('invalid Insert query');
   }
 
-  return new Promise<any>((resolve, reject) => {
-    DB.insert(doc, (err, doc) => {
-      if (err) reject(err);
-      else resolve(plugin.core ? doc : CleanDoc(doc));
-    });
-  });
+  const DB = await GET_DB(plugin.name);
+  if (!DB) throw new Error(`database failed to load`);
+
+  const result = await DB.insert<any>(doc);
+  return plugin.core ? result : CleanDoc(result);
 }
 
 export async function APIUpdate(plugin: PluginDetect, arg1: string | any, arg2: any, arg3?: any) {
   let query: any = null;
   let update: any = null;
-  let signature: any = { __a: plugin.name };
+  let signature: any = {};
   if (typeof arg1 == 'string' && typeof arg2 == 'object' && typeof arg3 == 'object') {
     arg2 = CheckQuery(arg2);
     arg3 = CheckQuery(arg3);
@@ -667,29 +665,27 @@ export async function APIUpdate(plugin: PluginDetect, arg1: string | any, arg2: 
     };
   }
 
-  return new Promise<any>((resolve, reject) => {
-    DB.update(
-      query,
-      update,
-      { upsert: false, multi: true, returnUpdatedDocs: true },
-      (err, num, docs: any[]) => {
-        if (err) reject(err);
-        else
-          resolve({
-            updated: num,
-            docs: isArray(docs)
-              ? docs.map(d => (plugin.core ? d : CleanDoc(d)))
-              : [plugin.core ? docs : CleanDoc(docs)],
-          });
-      }
-    );
+  const DB = await GET_DB(plugin.name);
+  if (!DB) throw new Error(`database failed to load`);
+
+  const docs = await DB.update<any>(query, update, {
+    upsert: false,
+    multi: true,
+    returnUpdatedDocs: true,
   });
+
+  return {
+    updated: docs.length,
+    docs: isArray(docs)
+      ? docs.map(d => (plugin.core ? d : CleanDoc(d)))
+      : [plugin.core ? docs : CleanDoc(docs)],
+  };
 }
 
 export async function APIUpsert(plugin: PluginDetect, arg1: string | any, arg2: any, arg3?: any) {
   let query: any = null;
   let update: any = null;
-  let signature: any = { __a: plugin.name };
+  let signature: any = {};
   if (typeof arg1 == 'string' && typeof arg2 == 'object' && typeof arg3 == 'object') {
     arg2 = CheckQuery(arg2);
     arg3 = CheckQuery(arg3);
@@ -704,7 +700,7 @@ export async function APIUpsert(plugin: PluginDetect, arg1: string | any, arg2: 
     update = arg3;
     signature.__s = 'plugins_profile';
     signature.__refid = arg1;
-  } else if (arg1 == null && typeof arg2 == 'object' && typeof arg3 == 'object') {
+  } else if (arg1 == null && typeof arg2 == 'object') {
     throw new Error('refid must be specified for Upsert Query');
   } else if (typeof arg1 == 'object' && typeof arg2 == 'object') {
     arg1 = CheckQuery(arg1);
@@ -724,24 +720,23 @@ export async function APIUpsert(plugin: PluginDetect, arg1: string | any, arg2: 
       ...signature,
     };
   }
-  return new Promise<any>((resolve, reject) => {
-    DB.update(
-      query,
-      update,
-      { upsert: true, multi: true, returnUpdatedDocs: true },
-      (err: Error, num: number, docs: any[], upsert: boolean = false) => {
-        if (err) reject(err);
-        else
-          resolve({
-            updated: num,
-            docs: isArray(docs)
-              ? docs.map(d => (plugin.core ? d : CleanDoc(d)))
-              : [plugin.core ? docs : CleanDoc(docs)],
-            upsert: upsert ? true : false,
-          });
-      }
-    );
+
+  const DB = await GET_DB(plugin.name);
+  if (!DB) throw new Error(`database failed to load`);
+
+  const docs = await DB.update<any>(query, update, {
+    upsert: true,
+    multi: true,
+    returnUpdatedDocs: true,
   });
+
+  return {
+    updated: docs.length,
+    docs: isArray(docs)
+      ? docs.map(d => (plugin.core ? d : CleanDoc(d)))
+      : [plugin.core ? docs : CleanDoc(docs)],
+    upsert: true,
+  };
 }
 
 export async function APIRemove(plugin: PluginDetect, arg1: string | any, arg2?: any) {
@@ -751,7 +746,6 @@ export async function APIRemove(plugin: PluginDetect, arg1: string | any, arg2?:
     query = {
       ...arg2,
       __s: 'plugins_profile',
-      __a: plugin.name,
       __refid: arg1,
     };
   } else if (arg1 == null && typeof arg2 == 'object') {
@@ -759,25 +753,21 @@ export async function APIRemove(plugin: PluginDetect, arg1: string | any, arg2?:
     query = {
       ...arg2,
       __s: 'plugins_profile',
-      __a: plugin.name,
     };
   } else if (typeof arg1 == 'object') {
     arg1 = CheckQuery(arg1);
     query = {
       ...arg1,
       __s: 'plugins',
-      __a: plugin.name,
     };
   } else {
     throw new Error('invalid Remove query');
   }
 
-  return new Promise<any>((resolve, reject) => {
-    DB.remove(query, { multi: true }, (err, num) => {
-      if (err) reject(err);
-      else resolve(num);
-    });
-  });
+  const DB = await GET_DB(plugin.name);
+  if (!DB) throw new Error(`database failed to load`);
+
+  return await DB.remove(query, { multi: true });
 }
 
 export async function APICount(plugin: PluginDetect, arg1: string | any, arg2?: any) {
@@ -787,7 +777,6 @@ export async function APICount(plugin: PluginDetect, arg1: string | any, arg2?: 
     query = {
       ...arg2,
       __s: 'plugins_profile',
-      __a: plugin.name,
       __refid: arg1,
     };
   } else if (arg1 == null && typeof arg2 == 'object') {
@@ -795,23 +784,19 @@ export async function APICount(plugin: PluginDetect, arg1: string | any, arg2?: 
     query = {
       ...arg2,
       __s: 'plugins_profile',
-      __a: plugin.name,
     };
   } else if (typeof arg1 == 'object') {
     arg1 = CheckQuery(arg1);
     query = {
       ...arg1,
       __s: 'plugins',
-      __a: plugin.name,
     };
   } else {
     throw new Error('invalid Count query');
   }
 
-  return new Promise<any>((resolve, reject) => {
-    DB.count(query, (err, num) => {
-      if (err) reject(err);
-      else resolve(num);
-    });
-  });
+  const DB = await GET_DB(plugin.name);
+  if (!DB) throw new Error(`database failed to load`);
+
+  return await DB.count(query);
 }

@@ -46,6 +46,7 @@ import _ from 'lodash';
 import { isPlainObject } from 'lodash';
 import { VERSION } from '../utils/Consts';
 import { card2nfc, nfc2card } from '../utils/CardCipher';
+import LzKN from '../utils/LzKN';
 
 /** Caller Detection */
 export function GetCallerPlugin(): string {
@@ -179,7 +180,7 @@ export function LoadExternalPlugins() {
       } catch {
         return null;
       }
-    }
+    },
   };
 
   $.R = {
@@ -293,7 +294,7 @@ export function LoadExternalPlugins() {
 
         instances.push({ instance, name });
       } catch (err) {
-        Logger.error(`failed to load`, { plugin: name });
+        Logger.error(`Failed to load`, { plugin: name });
         Logger.error(err);
       }
     }
@@ -305,7 +306,7 @@ export function LoadExternalPlugins() {
         plugin.Register();
         loaded.push(plugin);
       } catch (err) {
-        Logger.error(`failed during register()`, { plugin: name });
+        Logger.error(`Failed during register()`, { plugin: name });
         Logger.error(err, { plugin: name });
       }
     }

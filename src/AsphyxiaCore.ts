@@ -10,8 +10,9 @@ import chalk from 'chalk';
 import { LoadExternalPlugins } from './eamuse/ExternalPluginLoader';
 import { webui } from './webui/index';
 import path from 'path';
-import { ASSETS_PATH } from './utils/EamuseIO';
+import { ASSETS_PATH, LoadCoreDB } from './utils/EamuseIO';
 import open from 'open';
+import { Migrate } from './utils/migration';
 
 function isIPv6(ip: string) {
   return !!/(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/.test(
@@ -82,7 +83,9 @@ function Main() {
     const openAddr =
       cleaned == '0.0.0.0' || cleaned == '::' || cleaned == '0:0:0:0:0:0:0:0'
         ? 'localhost'
-        : (isV6 ? `[${removeNIC}]` : removeNIC);
+        : isV6
+        ? `[${removeNIC}]`
+        : removeNIC;
 
     Logger.info(``);
     const serverInfo = `${printAddr} at ${CONFIG.port}`;
@@ -116,4 +119,6 @@ function Main() {
   });
 }
 
-Main();
+Migrate().then(() => {
+  LoadCoreDB().then(Main);
+});
