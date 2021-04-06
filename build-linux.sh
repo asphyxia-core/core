@@ -28,4 +28,4 @@ rm -f ./build/asphyxia-core-linux-x64.zip
 cd build
 zip -qq asphyxia-core-linux-x64.zip asphyxia-core
 cd ..
-zip -qq -r plugins
+zip -qq asphyxia-core-linux-x64.zip -r plugins

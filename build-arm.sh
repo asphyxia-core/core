@@ -33,4 +33,4 @@ rm -f ./build/asphyxia-core-armv7.zip
 cd build
 zip -qq asphyxia-core-armv7.zip asphyxia-core
 cd ..
-zip -qq -r plugins
+zip -qq asphyxia-core-armv7.zip -r plugins

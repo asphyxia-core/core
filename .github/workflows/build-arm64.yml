@@ -18,7 +18,9 @@ jobs:
 
           # Set an output parameter `uname` for use in subsequent steps
           run: |
-            curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+            apt update
+            apt install -y curl
+            curl -sL https://deb.nodesource.com/setup_12.x | bash -
             apt install -y nodejs
             bash build-arm.sh
       - uses: actions/upload-artifact@v2
