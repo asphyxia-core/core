@@ -1,3 +1,7 @@
+## v1.30f
+
+- **WebUI**: Fixed a problem where sometime the database is shown twice
+
 ## v1.30c
 
 - **CORE**: Fixed an issue where the command line options are ignored

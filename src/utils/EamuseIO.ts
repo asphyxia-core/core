@@ -268,7 +268,7 @@ export async function PluginStats(): Promise<
   const result = [];
 
   for (const installed of ROOT_CONTAINER.Plugins.map(e => e.Identifier)) {
-    if (list.indexOf(`${installed}.db`) <= 0) {
+    if (list.indexOf(`${installed}.db`) < 0) {
       result.push({
         name: installed.split('@')[0].toUpperCase(),
         id: installed,
