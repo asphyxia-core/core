@@ -5,6 +5,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
       - uses: actions/setup-node@v1
         with:
           node-version: '12.16.1'
@@ -17,6 +19,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
       - uses: actions/setup-node@v1
         with:
           node-version: '12.16.1'
@@ -29,6 +33,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
       - uses: uraimo/run-on-arch-action@v2.0.5
         name: Run commands
         id: runcmd
