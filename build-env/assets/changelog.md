@@ -1,3 +1,8 @@
+## v1.31a
+
+- **CORE**: Fixed a problem where the xml parser fails on empty attributes
+- **API**: Added `U.EncodeString` and `U.DecodeString`
+
 ## v1.30f
 
 - **WebUI**: Fixed a problem where sometime the database is shown twice
