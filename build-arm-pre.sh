@@ -23,14 +23,3 @@ cd ./build-env
 npm ci
 cp -r typescript ./node_modules/
 
-echo "Packing binaries"
-cd ..
-npx pkg ./build-env -t node10.15.3-linux-armv7 -o ./build/asphyxia-core --options no-warnings
-
-echo "Compressing"
-
-rm -f ./build/asphyxia-core-armv7.zip
-cd build
-zip -qq asphyxia-core-armv7.zip asphyxia-core
-cd ..
-zip -qq ./build/asphyxia-core-armv7.zip -r plugins
