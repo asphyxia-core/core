@@ -50,7 +50,7 @@ jobs:
             apt install -y curl zip
             curl -sL https://deb.nodesource.com/setup_12.x | bash -
             apt install -y nodejs
-
+            npx
           run: |
             bash build-arm-build.sh
       - run: bash build-arm-post.sh

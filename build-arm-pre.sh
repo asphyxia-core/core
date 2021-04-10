@@ -2,7 +2,7 @@
 
 mkdir -p build
 
-regex='VERSION = '"'"'(.*)'"'"''
+regex='VERSION = '"'"'([a-z0-9.]*)'"'"''
 [[ $(cat ./src/utils/Consts.ts) =~ $regex ]]
 
 VERSION=${BASH_REMATCH[1]}
