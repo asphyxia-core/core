@@ -1,6 +1,15 @@
 name: Build Asphyxia Core
 on: [push]
 jobs:
+  remove-old-artifacts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Remove old artifacts
+        uses: c-hive/gha-remove-artifacts@v1
+        with:
+          age: '1 day'
   build-linux:
     runs-on: ubuntu-latest
     steps:
