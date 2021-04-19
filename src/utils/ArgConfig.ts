@@ -43,6 +43,12 @@ parser.addArgument(['--dev', '--console'], {
   action: 'storeTrue',
 });
 
+parser.addArgument(['-pa', '--ping-addr'], {
+  help: 'Use an ICMP pingable target to make your games think they are online',
+  metavar: 'IP',
+  dest: 'ping_addr',
+});
+
 parser.addArgument(['--force-load-db'], {
   help: 'Force load savedata and discard corrupted messages',
   defaultValue: false,
@@ -91,6 +97,13 @@ function CoreConfig() {
     type: 'string',
     default: 'localhost',
     needRestart: true,
+  });
+
+  CONFIG_MAP['core'].set('ping_ip', {
+    type: 'string',
+    default: '127.0.0.1',
+    needRestart: true,
+    desc: 'Use an ICMP pingable target to make your games think they are online',
   });
 
   CONFIG_MAP['core'].set('matching_port', {

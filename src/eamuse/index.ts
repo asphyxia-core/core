@@ -5,6 +5,7 @@ import { core } from './Core';
 import { EamusePlugin } from './EamusePlugin';
 import { EamuseRootRouter } from './EamuseRootRouter';
 import { Logger } from '../utils/Logger';
+import { CONFIG } from '../utils/ArgConfig';
 
 export const ROOT_CONTAINER = new EamuseRootRouter();
 let initialized = false;
@@ -44,6 +45,8 @@ export const services = (port: number, plugins: EamusePlugin[]) => {
 
   /* - Service */
   ROOT_CONTAINER.add('services.get', async (info, data, send) => {
+    const ping_ip = CONFIG.ping_ip;
+
     const services = {
       '@attr': {
         expire: 10800,
@@ -60,7 +63,7 @@ export const services = (port: number, plugins: EamusePlugin[]) => {
         {
           '@attr': {
             name: 'keepalive',
-            url: `http://127.0.0.1/keepalive?pa=127.0.0.1&ia=127.0.0.1&ga=127.0.0.1&ma=127.0.0.1&t1=2&t2=10`,
+            url: `http://${ping_ip}/core/keepalive?pa=${ping_ip}&ia=${ping_ip}&ga=${ping_ip}&ma=${ping_ip}&t1=2&t2=10`,
           },
         },
       ],
