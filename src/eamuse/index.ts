@@ -10,6 +10,17 @@ import { CONFIG } from '../utils/ArgConfig';
 export const ROOT_CONTAINER = new EamuseRootRouter();
 let initialized = false;
 
+const MODULE_HANDLERS: {
+  [key: string]: (code: string) => Promise<string[] | string>;
+} = {};
+
+export function PluginRegisterModules(
+  plugin: string,
+  moduleHandler: (code: string) => Promise<string[] | string>
+) {
+  MODULE_HANDLERS[plugin] = moduleHandler;
+}
+
 export const services = (port: number, plugins: EamusePlugin[]) => {
   if (initialized) {
     Logger.warn(`Only one service can be handled.`);
@@ -47,6 +58,18 @@ export const services = (port: number, plugins: EamusePlugin[]) => {
   ROOT_CONTAINER.add('services.get', async (info, data, send) => {
     const ping_ip = CONFIG.ping_ip;
 
+    const plugin = plugins.find(value => value.GameCodes.indexOf(info.gameCode) >= 0);
+
+    let extraModules: string[] = [];
+    if (plugin) {
+      const modules = await MODULE_HANDLERS[plugin.Identifier](info.model);
+      if (typeof modules === 'string') {
+        extraModules = [modules];
+      } else {
+        extraModules = modules;
+      }
+    }
+
     const services = {
       '@attr': {
         expire: 10800,
@@ -71,7 +94,12 @@ export const services = (port: number, plugins: EamusePlugin[]) => {
 
     const url =
       port == 80 ? `http://${(info as any).host}` : `http://${(info as any).host}:${port}`;
+
     for (const moduleName of coreModules) {
+      services.item.push({ '@attr': { name: moduleName, url } });
+    }
+
+    for (const moduleName of extraModules) {
       services.item.push({ '@attr': { name: moduleName, url } });
     }
 

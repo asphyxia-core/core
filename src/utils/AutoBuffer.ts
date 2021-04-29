@@ -80,7 +80,7 @@ const BINARY_LENGTH_MAP: { [key: string]: number } = {
 // Buffer polyfill
 if (process.version.startsWith('v10')) {
   Logger.debug('Polyfill: Bigint Buffer');
-  
+
   const writeBigU_Int64BE = (buf: Buffer, value: bigint, offset: number) => {
     let lo = Number(value & BigInt(0xffffffff));
     buf[offset + 7] = lo;
@@ -99,9 +99,9 @@ if (process.version.startsWith('v10')) {
     hi = hi >> 8;
     buf[offset] = hi;
     return offset + 8;
-  }
+  };
 
-  Buffer.prototype.readBigUInt64BE = function(offset = 0) {
+  Buffer.prototype.readBigUInt64BE = function (offset = 0) {
     const first = this[offset];
     const last = this[offset + 7];
     if (first === undefined || last === undefined) return;
@@ -114,7 +114,7 @@ if (process.version.startsWith('v10')) {
     return (BigInt(hi) << BigInt(32)) + BigInt(lo);
   };
 
-  Buffer.prototype.readBigInt64BE = function(offset = 0) {
+  Buffer.prototype.readBigInt64BE = function (offset = 0) {
     const first = this[offset];
     const last = this[offset + 7];
     if (first === undefined || last === undefined) return;
@@ -131,11 +131,11 @@ if (process.version.startsWith('v10')) {
     );
   };
 
-  Buffer.prototype.writeBigInt64BE = function(value: bigint, offset = 0) {
+  Buffer.prototype.writeBigInt64BE = function (value: bigint, offset = 0) {
     return writeBigU_Int64BE(this, value, offset);
   };
 
-  Buffer.prototype.writeBigUInt64BE = function(value: bigint, offset = 0) {
+  Buffer.prototype.writeBigUInt64BE = function (value: bigint, offset = 0) {
     return writeBigU_Int64BE(this, value, offset);
   };
 }

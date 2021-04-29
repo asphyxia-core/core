@@ -328,6 +328,38 @@ declare namespace R {
    * Callback can be async function if you want to use await for your DB operations.
    */
   function WebUIEvent(event: string, callback: (data: any) => void | Promise<void>): void;
+
+  /**
+   * Register a handler for adding extra modules
+   *
+   * Core has the following modules built-in:
+   *
+   * - `cardmng`
+   * - `facility`
+   * - `message`
+   * - `numbering`
+   * - `package`
+   * - `pcbevent`
+   * - `pcbtracker`
+   * - `pkglist`
+   * - `posevent`
+   * - `userdata`
+   * - `userid`
+   * - `eacoin`
+   * - `local`
+   * - `local2`
+   * - `lobby`
+   * - `lobby2`
+   * - `dlstatus`
+   * - `netlog`
+   * - `sidmgr`
+   * - `globby`
+   *
+   * Callback can be async function if you want to use await for your DB operations.
+   */
+  function ExtraModuleHandler(
+    handler: (model: string) => Promise<string[] | string> | string[] | string
+  ): void;
 }
 
 /**

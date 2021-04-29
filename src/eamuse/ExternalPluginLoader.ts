@@ -47,6 +47,7 @@ import _ from 'lodash';
 import { isPlainObject } from 'lodash';
 import { VERSION } from '../utils/Consts';
 import { card2nfc, nfc2card } from '../utils/CardCipher';
+import { PluginRegisterModules } from '.';
 
 /** Caller Detection */
 export function GetCallerPlugin(): string {
@@ -228,6 +229,9 @@ export function LoadExternalPlugins() {
     };
     $.R.DataFile = (path: string, options?: FILE_OPTIONS) => {
       PluginRegisterFile(plugin.Identifier, path, options);
+    };
+    $.R.ExtraModuleHandler = (handler: (model: string) => Promise<string[] | string>) => {
+      PluginRegisterModules(plugin.Identifier, handler);
     };
   }
 

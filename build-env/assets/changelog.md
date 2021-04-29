@@ -1,27 +1,19 @@
+## v1.40a
+
+- **API**: Added `R.ExtraModuleHandler` to allow plugins to define extra modules.
+
 ## v1.31d
 
-- **CORE**: Fixed a issue where plugins have problem updating migrated data.
-
-## v1.31c
-
+- **CORE**: Fixed a issue where plugins have problem updating migrated data
 - **CORE**: Added a configurable ICMP IP target for keepalive
-
-## v1.31b
-
 - **CORE**: Fixed a problem where the nfcid checker is detecting non nfcids
 - **CORE**: Now, nfcid checker will provide both refid and cardid to plugins
-
-## v1.31a
-
 - **CORE**: Fixed a problem where the xml parser fails on empty attributes
 - **API**: Added `U.EncodeString` and `U.DecodeString`
 
 ## v1.30f
 
 - **WebUI**: Fixed a problem where sometime the database is shown twice
-
-## v1.30c
-
 - **CORE**: Fixed an issue where the command line options are ignored
 - **PluginLoader**: Fixed an error during card-in if the current gamecode is not registered by any plugins
 - **Misc**: Upgrade TypeScript to 4.2.3
@@ -35,9 +27,6 @@
 - **Misc**: Fixed an issue where submitting config change sometimes leads to bad request error
 - **CORE**: `kencode` parser now tries to print the path of failure
 - **WebUI**: Fixed a problem that `POST /emit/<event_name>` fails
-
-## v1.20
-
 - **API**: Added `IO.Exists` for checking whether a file exists
 - **API**: Added `U.NFC2Card` and `U.Card2NFC` for card number conversion
 - **WebUI**: Removed "Game Support" section in plugins' overview if no game support is registered
