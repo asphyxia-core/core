@@ -61,11 +61,11 @@ export const services = (port: number, plugins: EamusePlugin[]) => {
     const plugin = plugins.find(value => value.GameCodes.indexOf(info.gameCode) >= 0);
 
     let extraModules: string[] = [];
-    if (plugin) {
+    if (plugin && MODULE_HANDLERS[plugin.Identifier]) {
       const modules = await MODULE_HANDLERS[plugin.Identifier](info.model);
       if (typeof modules === 'string') {
         extraModules = [modules];
-      } else {
+      } else if (modules != null) {
         extraModules = modules;
       }
     }
