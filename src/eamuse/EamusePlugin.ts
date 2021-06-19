@@ -19,13 +19,13 @@ import { CONFIG } from '../utils/ArgConfig';
 import { nfc2card } from '../utils/CardCipher';
 
 async function cardSanitizer(gameCode: string, str: string, refMap: any): Promise<string> {
-  const regex = /(^|[^A-F|a-f|0-9])([0|E][A-F|a-f|0-9]{15})($|[^A-F|a-f|0-9])/g;
+  const regex = /(^|[^A-Za-z0-9])((?:01[A-Fa-f0-9]{14})|(?:E004[A-Fa-f0-9]{12}))($|[^A-Za-z0-9=\-_,+\/])/g;
   if (typeof str !== 'string') {
     return str;
   }
 
   for (const match of str.match(regex) || []) {
-    const parts = match.match(/(^|[^A-F|a-f|0-9])([0|E][A-F|a-f|0-9]{15})($|[^A-F|a-f|0-9])/);
+    const parts = match.match(regex);
     const cid = parts && parts[2];
 
     if (!cid) throw new Error('no card');

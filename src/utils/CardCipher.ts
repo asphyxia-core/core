@@ -804,7 +804,7 @@ export const cardType = (cardID: string): number => {
   if (cardID.startsWith('E004')) {
     return 1;
   }
-  if (cardID.startsWith('0')) {
+  if (cardID.startsWith('01')) {
     return 2;
   }
   return -1;

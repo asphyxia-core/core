@@ -1,6 +1,7 @@
-## v1.40a
+## v1.40c
 
 - **API**: Added `R.ExtraModuleHandler` to allow plugins to define extra modules.
+- **Misc**: Fixed a problem of accidentally treated binary data as card number.
 
 ## v1.31d
 
