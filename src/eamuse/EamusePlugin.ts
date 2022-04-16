@@ -90,6 +90,16 @@ async function sanitization(gameCode: string, data: any, refMap: any = {}) {
   return data;
 }
 
+export type WebUISend = {
+  json: (data: any) => void;
+  text: (data: string) => void;
+  file: (path: string) => void;
+  buffer: (buffer: Buffer) => void;
+  redirect: (url: string) => void;
+  error: (code: number, message: string) => void;
+};
+export type WebUIEventHandler = (data: any, send: WebUISend) => Promise<void>;
+
 export class EamusePlugin {
   private pluginName: string;
   private pluginIdentifier: string;
@@ -106,7 +116,7 @@ export class EamusePlugin {
   private uiPages: string[];
   private uiProfiles: string[];
   private uiEvents: {
-    [event: string]: (data: any) => void | Promise<void>;
+    [event: string]: WebUIEventHandler;
   };
   private uiCache: {
     [file: string]: {
@@ -225,13 +235,13 @@ export class EamusePlugin {
     this.routes[method] = route;
   }
 
-  public RegisterWebUIEvent(event: string, callback: (data: any) => void | Promise<void>) {
+  public RegisterWebUIEvent(event: string, callback: WebUIEventHandler) {
     this.uiEvents[event] = callback;
   }
 
-  public async CallEvent(event: string, data: any) {
+  public async CallEvent(event: string, data: any, send: WebUISend) {
     if (this.uiEvents[event]) {
-      await this.uiEvents[event](data);
+      return await this.uiEvents[event](data, send);
     } else {
       Logger.warn(`event "${event}" does not exists`, { plugin: this.pluginIdentifier });
     }
@@ -266,10 +276,10 @@ export class EamusePlugin {
 
     const DB = {
       FindOne: (arg1: any, arg2?: any) => {
-        return APIFindOne({ name: this.pluginIdentifier, core: false }, arg1, arg2);
+        return APIFindOne({ identifier: this.pluginIdentifier, core: false }, arg1, arg2);
       },
       Find: (arg1: any, arg2?: any) => {
-        return APIFind({ name: this.pluginIdentifier, core: false }, arg1, arg2);
+        return APIFind({ identifier: this.pluginIdentifier, core: false }, arg1, arg2);
       },
     };
     const U = {

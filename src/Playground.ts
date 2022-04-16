@@ -5,6 +5,7 @@ import { writeFileSync, readFileSync, write } from 'fs';
 import { ReadConfig, SaveConfig, ARGS } from './utils/ArgConfig';
 import { renderFile as pugFile } from 'pug';
 import { KDataReader } from './utils/KDataReader';
+import { IFS } from './utils/IFSTools';
 
 // const data = readFileSync('response.bin');
 // const decode = kdecode(data);
@@ -48,5 +49,7 @@ import { KDataReader } from './utils/KDataReader';
 // const data = xmlToData(pugFile('build\\plugins\\sdvx\\template\\common4.pug'));
 // console.log(data);
 
-const data =
-  '{"collection":"mix","id":2,"code":"202974059619","name":"VVVV RANDOM MIX No.1","creator":"VVVV","param":"{ "dbVer" : "20191217", "gene" : { "params" : "{ \\"minorVer\\" : \\"20190729\\", \\"seed\\" : 847044788 }", "ver" : "20180222" }, "musics" : [ { "grade" : 3, "id" : 24 }, { "grade" : 3, "id" : 252 }, { "grade" : 2, "id" : 606 } ], "voxdj" : { "params" : "", "ver" : "20180222" } }","tag":1,"jacket":0,"_id":"keYijDT6zXc9sLgU","createdAt":"2020-05-31T00:07:38.734Z","updatedAt":"2020-05-31T00:07:38.734Z","__s":"plugins_profile","__a":"sdvx@asphyxia","__refid":"A59A6D7499842E3B"}';
+// const data =
+//   '{"collection":"mix","id":2,"code":"202974059619","name":"VVVV RANDOM MIX No.1","creator":"VVVV","param":"{ "dbVer" : "20191217", "gene" : { "params" : "{ \\"minorVer\\" : \\"20190729\\", \\"seed\\" : 847044788 }", "ver" : "20180222" }, "musics" : [ { "grade" : 3, "id" : 24 }, { "grade" : 3, "id" : 252 }, { "grade" : 2, "id" : 606 } ], "voxdj" : { "params" : "", "ver" : "20180222" } }","tag":1,"jacket":0,"_id":"keYijDT6zXc9sLgU","createdAt":"2020-05-31T00:07:38.734Z","updatedAt":"2020-05-31T00:07:38.734Z","__s":"plugins_profile","__a":"sdvx@asphyxia","__refid":"A59A6D7499842E3B"}';
+
+// const ifs = new IFS('')

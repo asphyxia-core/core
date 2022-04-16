@@ -1,8 +1,6 @@
 {
-  "includeDeclarations": true,
   "excludeExternals": true,
-  "externalPattern": ["!./plugins/asphyxia-core.d.ts"],
-  "mode": "file",
+  "entryPoints": ["./plugins/asphyxia-core.d.ts"],
   "readme": "none",
   "name": "Asphyxia CORE Module API",
   "out": "./docs/typedoc",

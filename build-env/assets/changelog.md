@@ -1,3 +1,8 @@
+## v1.50a
+
+- **API**: Extended `R.WebUIEvent` to allow the handler to respond with data.
+- **WebUI**: `emit()` function now returns an axios promise, in which you can grab the response data.
+
 ## v1.40d
 
 - **API**: Added `R.ExtraModuleHandler` to allow plugins to define extra modules.

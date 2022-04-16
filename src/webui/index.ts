@@ -350,25 +350,25 @@ webui.post(
     try {
       switch (command) {
         case 'FindOne':
-          res.json(await (APIFindOne as any)({ name: plugin, core: false }, ...args));
+          res.json(await (APIFindOne as any)({ idendifier: plugin, core: false }, ...args));
           break;
         case 'Find':
-          res.json(await (APIFind as any)({ name: plugin, core: false }, ...args));
+          res.json(await (APIFind as any)({ idendifier: plugin, core: false }, ...args));
           break;
         case 'Insert':
-          res.json(await (APIInsert as any)({ name: plugin, core: false }, ...args));
+          res.json(await (APIInsert as any)({ idendifier: plugin, core: false }, ...args));
           break;
         case 'Remove':
-          res.json(await (APIRemove as any)({ name: plugin, core: false }, ...args));
+          res.json(await (APIRemove as any)({ idendifier: plugin, core: false }, ...args));
           break;
         case 'Update':
-          res.json(await (APIUpdate as any)({ name: plugin, core: false }, ...args));
+          res.json(await (APIUpdate as any)({ idendifier: plugin, core: false }, ...args));
           break;
         case 'Upsert':
-          res.json(await (APIUpsert as any)({ name: plugin, core: false }, ...args));
+          res.json(await (APIUpsert as any)({ idendifier: plugin, core: false }, ...args));
           break;
         case 'Count':
-          res.json(await (APICount as any)({ name: plugin, core: false }, ...args));
+          res.json(await (APICount as any)({ idendifier: plugin, core: false }, ...args));
           break;
       }
     } catch (err) {
@@ -466,7 +466,7 @@ webui.delete(
       return res.sendStatus(400);
     }
 
-    if (await APIRemove({ name: plugin.Identifier, core: true }, refid, {})) {
+    if (await APIRemove({ identifier: plugin.Identifier, core: true }, refid, {})) {
       return res.sendStatus(200);
     } else {
       return res.sendStatus(404);
@@ -511,7 +511,7 @@ webui.get(
     }
 
     const profiles = groupBy(
-      await APIFind({ name: plugin.Identifier, core: true }, null, {}),
+      await APIFind({ identifier: plugin.Identifier, core: true }, null, {}),
       '__refid'
     );
 

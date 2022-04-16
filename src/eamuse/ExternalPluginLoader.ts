@@ -40,7 +40,7 @@ import {
   FILE_OPTIONS,
   PluginRegisterFile,
 } from '../utils/ArgConfig';
-import { EamusePlugin } from './EamusePlugin';
+import { EamusePlugin, WebUIEventHandler } from './EamusePlugin';
 import { EamuseRouteHandler } from './EamuseRouteContainer';
 import xml2json from 'fast-xml-parser';
 import _ from 'lodash';
@@ -80,7 +80,7 @@ const WrapCall = (methodName: string, func: any, def: any) => {
       Logger.error(`${methodName} unexpected error`);
       return def;
     }
-    return func({ name: plugin, core: false }, ...args);
+    return func({ identifier: plugin, core: false }, ...args);
   };
 };
 
@@ -89,7 +89,7 @@ const Pro = (res: any) => {
 };
 
 export type PluginDetect = {
-  name: string;
+  identifier: string;
   core: boolean;
 };
 
@@ -221,7 +221,7 @@ export function LoadExternalPlugins() {
     $.R.Contributor = (name: string, link?: string) => {
       plugin.RegisterContributor(name, link);
     };
-    $.R.WebUIEvent = (event: string, callback: (data: any) => void | Promise<void>) => {
+    $.R.WebUIEvent = (event: string, callback: WebUIEventHandler) => {
       plugin.RegisterWebUIEvent(event, callback);
     };
     $.R.Config = (key: string, options: CONFIG_OPTIONS) => {

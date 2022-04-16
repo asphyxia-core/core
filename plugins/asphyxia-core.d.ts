@@ -243,6 +243,61 @@ declare interface EamuseSend {
  */
 declare type EamusePluginRoute = (req: EamuseInfo, data: any, send: EamuseSend) => Promise<any>;
 
+declare interface WebUISend {
+  /**
+   * Respond with json data
+   *
+   * @param data Plain JavaScript object
+   */
+  json: (data: any) => void;
+
+  /**
+   * Respond with string
+   *
+   * @param data String
+   */
+  text: (data: string) => void;
+
+  /**
+   * Respond with file
+   *
+   * @param path Relative file path to this plugin's directory
+   */
+  file: (path: string) => void;
+
+  /**
+   * Respond with binary data
+   *
+   * @param buffer Binary data
+   */
+  buffer: (buffer: Buffer) => void;
+
+  /**
+   * Respond with redirect calls
+   * This is useful for progressing your WebUI to the next page when using form.
+   *
+   * @param url Target url
+   */
+  redirect: (url: string) => void;
+
+  /**
+   * Respond with error
+   *
+   * @param code HTTP Code. Like 404, for example
+   * @param message String message
+   */
+  error: (code: number, message: string) => void;
+}
+
+/**
+ * Helper type for typing your WebUIEvent.
+ *
+ * If you don't need to send anything. You can ignore send parameter.
+ * By default, if the handler don't send anything manually, it will send a
+ * redirect response to refresh the page when using form.
+ */
+declare type WebUIEventHandler = (data: any, send?: WebUISend) => Promise<void>;
+
 /**
  * Helper type for typing your custom route.
  *
@@ -327,7 +382,7 @@ declare namespace R {
    *
    * Callback can be async function if you want to use await for your DB operations.
    */
-  function WebUIEvent(event: string, callback: (data: any) => void | Promise<void>): void;
+  function WebUIEvent(event: string, callback: WebUIEventHandler): void;
 
   /**
    * Register a handler for adding extra modules

@@ -20,7 +20,7 @@ async function CheckProfile(gameCode: string, refid: string) {
   if (!plugin) {
     return false;
   }
-  const profile = await APIFindOne({ name: plugin.Identifier, core: true }, refid, {});
+  const profile = await APIFindOne({ identifier: plugin.Identifier, core: true }, refid, {});
   if (profile != null) {
     return true;
   }

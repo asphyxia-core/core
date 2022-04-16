@@ -85,7 +85,7 @@ const LoadDatabase = async (file: string) => {
 let CoreDB: nedb = null;
 export const LoadCoreDB = async () => {
   CoreDB = await LoadDatabase(COREDB_FILE);
-  
+
   if (!CoreDB) {
     process.exit(1);
   }
@@ -135,11 +135,11 @@ export function ReadAssets(file: string): any {
 //                Public IO
 // =========================================
 export function Resolve(plugin: PluginDetect, file: string) {
-  return path.resolve(PLUGIN_PATH, plugin.name, file);
+  return path.resolve(PLUGIN_PATH, plugin.identifier, file);
 }
 
 export async function ReadDir(plugin: PluginDetect, file: string) {
-  const target = path.resolve(PLUGIN_PATH, plugin.name, file);
+  const target = path.resolve(PLUGIN_PATH, plugin.identifier, file);
 
   return new Promise<{ name: string; type: 'file' | 'dir' | 'unsupported' }[]>(resolve => {
     readdir(target, { encoding: 'utf8', withFileTypes: true }, (err, files) => {
@@ -158,7 +158,7 @@ export async function ReadDir(plugin: PluginDetect, file: string) {
 }
 
 export function Exists(plugin: PluginDetect, file: string) {
-  const target = path.resolve(PLUGIN_PATH, plugin.name, file);
+  const target = path.resolve(PLUGIN_PATH, plugin.identifier, file);
   return existsSync(target);
 }
 
@@ -168,7 +168,7 @@ export async function WriteFile(
   data: string | Buffer,
   options: { encoding?: string | null; mode?: number | string; flag?: string } | string | null
 ) {
-  const target = path.resolve(PLUGIN_PATH, plugin.name, file);
+  const target = path.resolve(PLUGIN_PATH, plugin.identifier, file);
 
   PrepareDirectory(path.dirname(target));
 
@@ -192,7 +192,7 @@ export async function WriteFile(
 }
 
 export async function DeleteFile(plugin: PluginDetect, file: string) {
-  const target = path.resolve(PLUGIN_PATH, plugin.name, file);
+  const target = path.resolve(PLUGIN_PATH, plugin.identifier, file);
 
   return new Promise<void>(resolve => {
     unlink(target, err => {
@@ -209,7 +209,7 @@ export async function ReadFile(
   file: string,
   options: { encoding?: string | null; flag?: string } | string | undefined | null
 ) {
-  const target = path.resolve(PLUGIN_PATH, plugin.name, file);
+  const target = path.resolve(PLUGIN_PATH, plugin.identifier, file);
 
   return new Promise<string | Buffer>(resolve => {
     if (options == null) {
@@ -546,7 +546,7 @@ export async function APIFindOne(plugin: PluginDetect, arg1: string | any, arg2?
     throw new Error('invalid FindOne query');
   }
 
-  const DB = await GET_DB(plugin.name);
+  const DB = await GET_DB(plugin.identifier);
   if (!DB) throw new Error(`database failed to load`);
 
   const result = await DB.findOne(query, {});
@@ -578,7 +578,7 @@ export async function APIFind(plugin: PluginDetect, arg1: string | any, arg2?: a
     throw new Error('invalid Find query');
   }
 
-  const DB = await GET_DB(plugin.name);
+  const DB = await GET_DB(plugin.identifier);
   if (!DB) throw new Error(`database failed to load`);
 
   const result = await DB.find<any>(query, {}).sort({ createdAt: 1 }).exec();
@@ -592,7 +592,9 @@ export async function APIInsert(plugin: PluginDetect, arg1: string | any, arg2?:
     if (!plugin.core) {
       const profile = await FindProfile(arg1);
       if (profile == null) {
-        Logger.warn('refid does not exists, insert operation canceled', { plugin: plugin.name });
+        Logger.warn('refid does not exists, insert operation canceled', {
+          plugin: plugin.identifier,
+        });
         return null;
       }
     }
@@ -613,7 +615,7 @@ export async function APIInsert(plugin: PluginDetect, arg1: string | any, arg2?:
     throw new Error('invalid Insert query');
   }
 
-  const DB = await GET_DB(plugin.name);
+  const DB = await GET_DB(plugin.identifier);
   if (!DB) throw new Error(`database failed to load`);
 
   const result = await DB.insert<any>(doc);
@@ -656,7 +658,7 @@ export async function APIUpdate(plugin: PluginDetect, arg1: string | any, arg2: 
     };
   }
 
-  const DB = await GET_DB(plugin.name);
+  const DB = await GET_DB(plugin.identifier);
   if (!DB) throw new Error(`database failed to load`);
 
   const docs = await DB.update<any>(query, update, {
@@ -683,7 +685,9 @@ export async function APIUpsert(plugin: PluginDetect, arg1: string | any, arg2: 
     if (!plugin.core) {
       const profile = await FindProfile(arg1);
       if (profile == null) {
-        Logger.warn('refid does not exists, upsert operation canceled', { plugin: plugin.name });
+        Logger.warn('refid does not exists, upsert operation canceled', {
+          plugin: plugin.identifier,
+        });
         return { updated: 0, docs: [], upsert: false };
       }
     }
@@ -712,7 +716,7 @@ export async function APIUpsert(plugin: PluginDetect, arg1: string | any, arg2: 
     };
   }
 
-  const DB = await GET_DB(plugin.name);
+  const DB = await GET_DB(plugin.identifier);
   if (!DB) throw new Error(`database failed to load`);
 
   const docs = await DB.update<any>(query, update, {
@@ -755,7 +759,7 @@ export async function APIRemove(plugin: PluginDetect, arg1: string | any, arg2?:
     throw new Error('invalid Remove query');
   }
 
-  const DB = await GET_DB(plugin.name);
+  const DB = await GET_DB(plugin.identifier);
   if (!DB) throw new Error(`database failed to load`);
 
   return await DB.remove(query, { multi: true });
@@ -786,7 +790,7 @@ export async function APICount(plugin: PluginDetect, arg1: string | any, arg2?: 
     throw new Error('invalid Count query');
   }
 
-  const DB = await GET_DB(plugin.name);
+  const DB = await GET_DB(plugin.identifier);
   if (!DB) throw new Error(`database failed to load`);
 
   return await DB.count(query);
