@@ -1,3 +1,7 @@
+## v1.50b
+
+- **CORE**: Swapping the `nedb` dependency to `@seald-io/nedb`
+
 ## v1.50a
 
 - **API**: Extended `R.WebUIEvent` to allow the handler to respond with data.

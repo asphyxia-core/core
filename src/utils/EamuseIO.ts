@@ -2,9 +2,9 @@ import { existsSync, mkdirSync, readFileSync, writeFile, readFile, readdir, unli
 
 import { Logger } from './Logger';
 import path from 'path';
-import nedb from 'nedb-promises';
+import nedb from '@seald-io/nedb';
 import { nfc2card } from './CardCipher';
-import hashids from 'hashids/cjs';
+import hashids from 'hashids/cjs/'
 import { NAMES } from './Consts';
 import { CONFIG, ARGS } from './ArgConfig';
 import { isArray, get, isPlainObject, sortBy } from 'lodash';
@@ -23,7 +23,7 @@ const SAVE_PATH = path.resolve(EXEC_PATH, ARGS.savedata);
 const COREDB_FILE = path.join(SAVE_PATH, 'core.db');
 
 const LoadDatabase = async (file: string) => {
-  const DB = nedb.create({
+  const DB = new nedb({
     filename: file,
     timestampData: true,
     corruptAlertThreshold: ARGS.fixdb ? 0.2 : 0,
@@ -31,7 +31,7 @@ const LoadDatabase = async (file: string) => {
 
   const filename = path.basename(file);
   try {
-    await DB.load();
+    await DB.loadDatabaseAsync();
     if (filename != 'core.db') Logger.info(`Database loaded: ${filename}`, { plugin: 'db' });
   } catch (err) {
     if (err) {
@@ -55,7 +55,7 @@ const LoadDatabase = async (file: string) => {
     return null;
   }
 
-  const value = await DB.count({ __s: 'profile' });
+  const value = await DB.countAsync({ __s: 'profile' });
   if (value < 0) {
     Logger.error('Profile indexes is corrupted. Can not load database.');
     process.exit(1);
@@ -67,14 +67,14 @@ const LoadDatabase = async (file: string) => {
   }
 
   try {
-    await DB.ensureIndex({ fieldName: '__s' });
-    await DB.ensureIndex({ fieldName: '__refid' });
+    await DB.ensureIndexAsync({ fieldName: '__s' });
+    await DB.ensureIndexAsync({ fieldName: '__refid' });
   } catch (err) {
     Logger.error(err);
   }
 
   try {
-    await DB.remove({ __s: 'plugins_profile', __refid: { $exists: false } }, { multi: true });
+    await DB.removeAsync({ __s: 'plugins_profile', __refid: { $exists: false } }, { multi: true });
   } catch (err) {
     Logger.error(err);
   }
@@ -238,11 +238,11 @@ export async function ReadFile(
 
 export async function GetUniqueInt() {
   try {
-    const doc = await CoreDB.findOne<any>({
+    const doc = await CoreDB.findOneAsync<any>({
       __s: 'counter',
     });
     const result = doc ? doc.value : 0;
-    await CoreDB.update(
+    await CoreDB.updateAsync(
       {
         __s: 'counter',
       },
@@ -316,7 +316,7 @@ export async function PurgePlugin(affiliation: string) {
 
 export async function Count(doc: any) {
   try {
-    return await CoreDB.count(doc);
+    return await CoreDB.countAsync(doc);
   } catch (err) {
     Logger.error(err);
     return -1;
@@ -329,7 +329,7 @@ export async function GetProfileCount() {
 
 export async function FindCard(cid: string) {
   try {
-    return await CoreDB.findOne<any>({ __s: 'card', cid });
+    return await CoreDB.findOneAsync<any>({ __s: 'card', cid });
   } catch (err) {
     Logger.error(err);
     return false;
@@ -338,9 +338,9 @@ export async function FindCard(cid: string) {
 
 export async function FindCardsByRefid(refid: string) {
   try {
-    return await CoreDB.find<any>({ __s: 'card', __refid: refid })
+    return await CoreDB.findAsync<any>({ __s: 'card', __refid: refid })
       .sort({ createdAt: 1 })
-      .exec();
+      .execAsync();
   } catch (err) {
     Logger.error(err);
     return false;
@@ -361,7 +361,7 @@ export async function CreateCard(cid: string, refid: string, forcePrint?: string
   }
 
   try {
-    return await CoreDB.insert<any>({ __s: 'card', __refid: refid, print, cid });
+    return await CoreDB.insertAsync<any>({ __s: 'card', __refid: refid, print, cid });
   } catch (err) {
     Logger.error(err);
     return false;
@@ -370,7 +370,7 @@ export async function CreateCard(cid: string, refid: string, forcePrint?: string
 
 export async function DeleteCard(cid: string) {
   try {
-    await CoreDB.remove({ __s: 'card', cid }, { multi: true });
+    await CoreDB.removeAsync({ __s: 'card', cid }, { multi: true });
     return true;
   } catch (err) {
     Logger.error(err);
@@ -380,7 +380,7 @@ export async function DeleteCard(cid: string) {
 
 export async function FindProfile(refid: string) {
   try {
-    return await CoreDB.findOne<any>({
+    return await CoreDB.findOneAsync<any>({
       __s: 'profile',
       __refid: refid,
     });
@@ -400,7 +400,7 @@ export async function CreateProfile(pin: string, gameCode: string) {
   const name = NAMES[Math.floor(Math.random() * NAMES.length)];
 
   try {
-    return await CoreDB.insert({
+    return await CoreDB.insertAsync({
       __s: 'profile',
       __refid: refid,
       pin,
@@ -415,7 +415,7 @@ export async function CreateProfile(pin: string, gameCode: string) {
 
 export async function UpdateProfile(refid: string, update: any, upsert: boolean = false) {
   try {
-    await CoreDB.update(
+    await CoreDB.updateAsync(
       {
         __s: 'profile',
         __refid: refid,
@@ -434,7 +434,7 @@ export async function UpdateProfile(refid: string, update: any, upsert: boolean 
 
 export async function PurgeProfile(refid: string) {
   try {
-    await CoreDB.remove({ __refid: refid }, { multi: true });
+    await CoreDB.removeAsync({ __refid: refid }, { multi: true });
   } catch (err) {
     Logger.error(err);
     return false;
@@ -451,7 +451,7 @@ export async function PurgeProfile(refid: string) {
     const DB = await GET_DB(affiliation);
     if (DB) {
       try {
-        await DB.remove({ __refid: refid }, { multi: true });
+        await DB.removeAsync({ __refid: refid }, { multi: true });
       } catch (err) {
         Logger.error(err);
       }
@@ -463,7 +463,7 @@ export async function PurgeProfile(refid: string) {
 
 export async function BindProfile(refid: string, gameCode: string) {
   try {
-    return await CoreDB.update(
+    return await CoreDB.updateAsync(
       {
         __s: 'profile',
         __refid: refid,
@@ -478,11 +478,11 @@ export async function BindProfile(refid: string, gameCode: string) {
 
 export async function GetProfiles() {
   try {
-    return (await CoreDB.find<any>({
+    return (await CoreDB.findAsync<any>({
       __s: 'profile',
     })
       .sort({ createdAt: 1 })
-      .exec()) as any[];
+      .execAsync()) as any[];
   } catch (err) {
     Logger.error(err);
     return false;
@@ -549,7 +549,7 @@ export async function APIFindOne(plugin: PluginDetect, arg1: string | any, arg2?
   const DB = await GET_DB(plugin.identifier);
   if (!DB) throw new Error(`database failed to load`);
 
-  const result = await DB.findOne(query, {});
+  const result = await DB.findOneAsync(query, {});
   return plugin.core ? result : CleanDoc(result);
 }
 
@@ -581,7 +581,7 @@ export async function APIFind(plugin: PluginDetect, arg1: string | any, arg2?: a
   const DB = await GET_DB(plugin.identifier);
   if (!DB) throw new Error(`database failed to load`);
 
-  const result = await DB.find<any>(query, {}).sort({ createdAt: 1 }).exec();
+  const result = await DB.findAsync<any>(query, {}).sort({ createdAt: 1 }).execAsync();
   return plugin.core ? result : (CleanDoc(result) as any[]);
 }
 
@@ -618,7 +618,7 @@ export async function APIInsert(plugin: PluginDetect, arg1: string | any, arg2?:
   const DB = await GET_DB(plugin.identifier);
   if (!DB) throw new Error(`database failed to load`);
 
-  const result = await DB.insert<any>(doc);
+  const result = await DB.insertAsync<any>(doc);
   return plugin.core ? result : CleanDoc(result);
 }
 
@@ -661,14 +661,14 @@ export async function APIUpdate(plugin: PluginDetect, arg1: string | any, arg2: 
   const DB = await GET_DB(plugin.identifier);
   if (!DB) throw new Error(`database failed to load`);
 
-  const docs = await DB.update<any>(query, update, {
+  const docs = await DB.updateAsync<any>(query, update, {
     upsert: false,
     multi: true,
     returnUpdatedDocs: true,
   });
 
   return {
-    updated: docs.length,
+    updated: (docs as any).length,
     docs: isArray(docs)
       ? docs.map(d => (plugin.core ? d : CleanDoc(d)))
       : [plugin.core ? docs : CleanDoc(docs)],
@@ -719,14 +719,14 @@ export async function APIUpsert(plugin: PluginDetect, arg1: string | any, arg2: 
   const DB = await GET_DB(plugin.identifier);
   if (!DB) throw new Error(`database failed to load`);
 
-  const docs = await DB.update<any>(query, update, {
+  const docs = await DB.updateAsync<any>(query, update, {
     upsert: true,
     multi: true,
     returnUpdatedDocs: true,
   });
 
   return {
-    updated: docs.length,
+    updated: (docs as any).length,
     docs: isArray(docs)
       ? docs.map(d => (plugin.core ? d : CleanDoc(d)))
       : [plugin.core ? docs : CleanDoc(docs)],
@@ -762,7 +762,7 @@ export async function APIRemove(plugin: PluginDetect, arg1: string | any, arg2?:
   const DB = await GET_DB(plugin.identifier);
   if (!DB) throw new Error(`database failed to load`);
 
-  return await DB.remove(query, { multi: true });
+  return await DB.removeAsync(query, { multi: true });
 }
 
 export async function APICount(plugin: PluginDetect, arg1: string | any, arg2?: any) {
@@ -793,5 +793,5 @@ export async function APICount(plugin: PluginDetect, arg1: string | any, arg2?: 
   const DB = await GET_DB(plugin.identifier);
   if (!DB) throw new Error(`database failed to load`);
 
-  return await DB.count(query);
+  return await DB.countAsync(query);
 }
