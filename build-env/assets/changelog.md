@@ -1,6 +1,6 @@
 ## v1.50b
 
-- **CORE**: Swapping the `nedb` dependency to `@seald-io/nedb`
+- **CORE**: Swapped the `nedb` dependency to `@seald-io/nedb`
 
 ## v1.50a
 
