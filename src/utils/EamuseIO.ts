@@ -4,7 +4,7 @@ import { Logger } from './Logger';
 import path from 'path';
 import nedb from '@seald-io/nedb';
 import { nfc2card } from './CardCipher';
-import hashids from 'hashids/cjs/'
+import hashids from 'hashids/cjs'
 import { NAMES } from './Consts';
 import { CONFIG, ARGS } from './ArgConfig';
 import { isArray, get, isPlainObject, sortBy } from 'lodash';
