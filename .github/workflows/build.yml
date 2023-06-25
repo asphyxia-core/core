@@ -52,7 +52,7 @@ jobs:
             apt-get install -y nodejs
 
           run: |
-            bash build-arm-build.sh
+            sudo bash build-arm-build.sh
       - run: bash build-arm-post.sh
       - uses: actions/upload-artifact@v2
         with:
