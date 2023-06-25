@@ -9,7 +9,7 @@ jobs:
           submodules: 'recursive'
       - uses: actions/setup-node@v1
         with:
-          node-version: '12.16.1'
+          node-version: '16.20.1'
       - run: bash build-linux.sh
       - uses: actions/upload-artifact@v2
         with:
@@ -23,7 +23,7 @@ jobs:
           submodules: 'recursive'
       - uses: actions/setup-node@v1
         with:
-          node-version: '12.16.1'
+          node-version: '16.20.1'
       - run: pwsh build-win.ps1
       - uses: actions/upload-artifact@v2
         with:
@@ -48,7 +48,7 @@ jobs:
           install: |
             apt-get update
             apt-get install -y curl zip
-            curl -sL https://deb.nodesource.com/setup_12.x | bash -
+            curl -sL https://deb.nodesource.com/setup_16.x | bash -
             apt-get install -y nodejs
 
           run: |
