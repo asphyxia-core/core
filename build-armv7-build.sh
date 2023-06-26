@@ -1,5 +1,7 @@
 #!/bin/bash
 
+apt-get install -y build-essential patch
+
 mkdir /root/.pkg-cache
 mkdir /root/.pkg-cache/node
 chmod 777 /root
