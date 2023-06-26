@@ -1,5 +1,5 @@
 #!/bin/bash
-mkdir /root
+
 mkdir /root/.pkg-cache
 mkdir /root/.pkg-cache/node
 chmod 777 /root
