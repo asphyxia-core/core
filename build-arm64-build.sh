@@ -6,4 +6,4 @@ chmod 777 /root
 chmod 777 /root/.pkg-cache
 chmod 777 /root/.pkg-cache/node
 echo "Packing binaries"
-npx pkg ./build-env -t node16-linux-arm64 -o ./build/asphyxia-core --options no-warnings
+npx pkg ./build-env -t node16.16.0-linux-arm64 -o ./build/asphyxia-core --options no-warnings

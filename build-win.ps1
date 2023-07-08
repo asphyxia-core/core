@@ -1,6 +1,7 @@
 # Getting version
 $VER_CODE = Select-String -Path ".\src\utils\Consts.ts" -Pattern "VERSION = '(.*)'"
 $VERSION = $VER_CODE.Matches.Groups[1].Value;
+$env:NODE_OPTIONS = "--openssl-legacy-provider"
 
 Write-Output "Building Version $VERSION for Windows"
 
@@ -31,17 +32,19 @@ Copy-Item -Recurse -Path "typescript" -Destination "node_modules/"
 
 Set-Location -Path ".."
 
-# Packing x64
-Write-Output "Packing binaries"
-npx pkg .\build-env -t "node16-win-x64" -o .\build\asphyxia-core-x64 --options no-warnings
+$env:PKG_CACHE_PATH = "$env:USERPROFILE\.pkg-cache"
+$env:PKG_IGNORE_TAG = "true" # prevents pkg-fetch to add a tag folder
 
+# Move prebuilt binaries
+Copy-Item -Path ".\build-env\pkg-cache\built-v16.16.0-win-x86" -Destination "$env:USERPROFILE\.pkg-cache\"
+Copy-Item -Path ".\build-env\pkg-cache\built-v16.16.0-win-x64" -Destination "$env:USERPROFILE\.pkg-cache\"
+
+Write-Output "Packing binaries"
+
+# Packing x64
+npx pkg .\build-env -t "node16.16.0-win-x64" -o .\build\asphyxia-core-x64 --options no-warnings
 Compress-Archive -Path ".\build\asphyxia-core-x64.exe", ".\plugins" -DestinationPath ".\build\asphyxia-core-win-x64.zip" -Force
 
 # Packing x86
-$env:PKG_CACHE_PATH = "$env:USERPROFILE\.pkg-cache"
-$env:PKG_IGNORE_TAG = "true" # prevents pkg-fetch to add a tag folder
-Invoke-WebRequest -Uri "https://latowolf.freeddns.org/ubuntu/www/built-v16.16.0-win-x86" -OutFile "built-v16.16.0-win-x86"
-Move-Item -Path "built-v16.16.0-win-x86" -Destination "$env:USERPROFILE\.pkg-cache\"
-
-npx pkg .\build-env -t "node16-win-x86" -o .\build\asphyxia-core-x86 --options no-warnings
+npx pkg .\build-env -t "node16.16.0-win-x86" -o .\build\asphyxia-core-x86 --options no-warnings
 Compress-Archive -Path ".\build\asphyxia-core-x86.exe", ".\plugins" -DestinationPath ".\build\asphyxia-core-win-x86.zip" -Force

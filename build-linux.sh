@@ -7,6 +7,8 @@ regex='VERSION = '"'"'([a-z0-9.]*)'"'"''
 
 VERSION=${BASH_REMATCH[1]}
 
+export NODE_OPTIONS=--openssl-legacy-provider
+
 echo "Building Version $VERSION for Linux"
 
 echo "NPM Install"
@@ -25,7 +27,7 @@ cp -r typescript ./node_modules/
 
 echo "Packing binaries"
 cd ..
-npx pkg ./build-env -t node16-linux-x64 -o ./build/asphyxia-core --options no-warnings
+npx pkg ./build-env -t node16.16.0-linux-x64 -o ./build/asphyxia-core --options no-warnings
 
 echo "Compressing"
 
