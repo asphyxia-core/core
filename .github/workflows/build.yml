@@ -1,60 +1,60 @@
-name: Build Asphyxia Core
-on: [push]
-jobs:
-  build-linux:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: 'recursive'
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '16.20.1'
-      - run: bash build-linux.sh
-      - uses: actions/upload-artifact@v2
-        with:
-          name: core-artifact-linux
-          path: build/*.zip
-  build-win:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: 'recursive'
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '16.20.1'
-      - run: pwsh build-win.ps1
-      - uses: actions/upload-artifact@v2
-        with:
-          name: core-artifact-windows
-          path: build/*.zip
-  build-arm:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: 'recursive'
-      - run: bash build-arm-pre.sh
-      - uses: uraimo/run-on-arch-action@v2.5.0
-        name: Run commands
-        id: runcmd
-        with:
-          arch: aarch64
-          distro: ubuntu20.04
+# name: Build Asphyxia Core
+# on: [push]
+# jobs:
+#   build-linux:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v2
+#         with:
+#           submodules: 'recursive'
+#       - uses: actions/setup-node@v1
+#         with:
+#           node-version: '16.20.1'
+#       - run: bash build-linux.sh
+#       - uses: actions/upload-artifact@v2
+#         with:
+#           name: core-artifact-linux
+#           path: build/*.zip
+#   build-win:
+#     runs-on: windows-latest
+#     steps:
+#       - uses: actions/checkout@v2
+#         with:
+#           submodules: 'recursive'
+#       - uses: actions/setup-node@v1
+#         with:
+#           node-version: '16.20.1'
+#       - run: pwsh build-win.ps1
+#       - uses: actions/upload-artifact@v2
+#         with:
+#           name: core-artifact-windows
+#           path: build/*.zip
+#   build-arm:
+#     runs-on: ubuntu-20.04
+#     steps:
+#       - uses: actions/checkout@v2
+#         with:
+#           submodules: 'recursive'
+#       - run: bash build-arm-pre.sh
+#       - uses: uraimo/run-on-arch-action@v2.5.0
+#         name: Run commands
+#         id: runcmd
+#         with:
+#           arch: aarch64
+#           distro: ubuntu20.04
 
-          githubToken: ${{ github.token }}
+#           githubToken: ${{ github.token }}
 
-          install: |
-            apt-get update
-            apt-get install -y curl zip
-            curl -sL https://deb.nodesource.com/setup_16.x | bash -
-            apt-get install -y nodejs
+#           install: |
+#             apt-get update
+#             apt-get install -y curl zip
+#             curl -sL https://deb.nodesource.com/setup_16.x | bash -
+#             apt-get install -y nodejs
 
-          run: |
-            bash build-arm-build.sh
-      - run: bash build-arm-post.sh
-      - uses: actions/upload-artifact@v2
-        with:
-          name: core-artifact-arm64
-          path: build/*.zip
+#           run: |
+#             bash build-arm-build.sh
+#       - run: bash build-arm-post.sh
+#       - uses: actions/upload-artifact@v2
+#         with:
+#           name: core-artifact-arm64
+#           path: build/*.zip
