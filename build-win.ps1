@@ -1,7 +1,6 @@
 # Getting version
 $VER_CODE = Select-String -Path ".\src\utils\Consts.ts" -Pattern "VERSION = '(.*)'"
 $VERSION = $VER_CODE.Matches.Groups[1].Value;
-$env:NODE_OPTIONS = "--openssl-legacy-provider"
 
 Write-Output "Building Version $VERSION for Windows"
 
