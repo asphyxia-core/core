@@ -30,18 +30,18 @@ jobs:
           name: core-artifact-windows
           path: build/*.zip
   build-arm:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
       - run: bash build-arm-pre.sh
-      - uses: uraimo/run-on-arch-action@v2.5.0
+      - uses: uraimo/run-on-arch-action@v3.0.1
         name: Run commands
         id: runcmd
         with:
           arch: aarch64
-          distro: ubuntu20.04
+          distro: ubuntu24.04
           githubToken: ${{ github.token }}
           install: |
             apt-get update
