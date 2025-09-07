@@ -11,7 +11,7 @@ jobs:
         with:
           node-version: '16.20.1'
       - run: bash build-linux.sh
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: core-artifact-linux
           path: build/*.zip
@@ -25,7 +25,7 @@ jobs:
         with:
           node-version: '16.20.1'
       - run: pwsh build-win.ps1
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: core-artifact-windows
           path: build/*.zip
@@ -51,7 +51,7 @@ jobs:
           run: |
             bash build-arm-build.sh
       - run: bash build-arm-post.sh
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: core-artifact-arm64
           path: build/*.zip
