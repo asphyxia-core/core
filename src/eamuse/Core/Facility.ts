@@ -11,7 +11,7 @@ facility.add('facility.get', async (info, data, send) => {
   const result = {
     location: {
       id: kitem('str', 'ea'),
-      country: kitem('str', 'AX'),
+      country: kitem('str', 'JP'),
       region: kitem('str', '1'),
       name: kitem('str', 'CORE'),
       type: kitem('u8', 0),
