@@ -1,3 +1,6 @@
+## v1.50e
+- **CORE**: Change country code from `AX` to `JP` in `facility.get`
+
 ## v1.50d
 - **CORE**: Fix a problem where `kencode` would crash if any array is empty
 
