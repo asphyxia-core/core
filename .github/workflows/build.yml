@@ -1,5 +1,12 @@
 name: Build Asphyxia Core
-on: [push, pull_request]
+on:
+  push:
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
 jobs:
   build-linux:
     runs-on: ubuntu-latest
@@ -55,3 +62,37 @@ jobs:
         with:
           name: core-artifact-arm64
           path: build/*.zip
+  release:
+    name: Create Release
+    needs: [build-linux, build-win, build-arm]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+    steps:
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: core-artifact-linux
+          path: ./artifacts
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: core-artifact-windows
+          path: ./artifacts
+      - name: Download ARM artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: core-artifact-arm64
+          path: ./artifacts
+      - name: Display structure of downloaded files
+        run: ls -R ./artifacts
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ./artifacts/*.zip
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref, '-alpha') || contains(github.ref, '-beta') || contains(github.ref, '-rc') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
