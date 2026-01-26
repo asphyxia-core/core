@@ -3,7 +3,6 @@ import { get } from 'lodash';
 import { ROOT_CONTAINER } from '../index';
 import {
   FindCard,
-  GetProfileCount,
   FindProfile,
   CreateProfile,
   BindProfile,
@@ -35,12 +34,6 @@ cardmng.add('cardmng.inquire', async (info, data, send) => {
   const card = await FindCard(cid);
 
   if (!card) {
-    const profileCount = await GetProfileCount();
-    if (profileCount < 0 || profileCount >= 16) {
-      // Refuse to create new account
-      return send.status(110);
-    }
-
     // Create new account
     return send.status(112);
   }

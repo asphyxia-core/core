@@ -4,5 +4,6 @@
   "readme": "none",
   "name": "Asphyxia CORE Module API",
   "out": "./docs/typedoc",
-  "tsconfig": "./plugins/tsconfig.json"
+  "tsconfig": "./plugins/tsconfig.json",
+  "disableSources": true
 }

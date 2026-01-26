@@ -6,21 +6,17 @@ import { Logger } from '../utils/Logger';
 import { PLUGIN_PATH, APIFindOne, APIFind } from '../utils/EamuseIO';
 import path from 'path';
 import { readdirSync, readFileSync } from 'fs';
-import {
-  FindCard,
-  CreateProfile,
-  CreateCard,
-  BindProfile,
-  GetProfileCount,
-} from '../utils/EamuseIO';
+import { FindCard, CreateProfile, CreateCard, BindProfile } from '../utils/EamuseIO';
 
 import { compile } from 'pug';
 import { CONFIG } from '../utils/ArgConfig';
 import { nfc2card } from '../utils/CardCipher';
 
 async function cardSanitizer(gameCode: string, str: string, refMap: any): Promise<string> {
-  const regex = /(^|[^A-Za-z0-9])((?:01[A-Fa-f0-9]{14})|(?:E004[A-Fa-f0-9]{12}))($|[^A-Za-z0-9=\-_,+\/])/g;
-  const regexI = /(^|[^A-Za-z0-9])((?:01[A-Fa-f0-9]{14})|(?:E004[A-Fa-f0-9]{12}))($|[^A-Za-z0-9=\-_,+\/])/;
+  const regex =
+    /(^|[^A-Za-z0-9])((?:01[A-Fa-f0-9]{14})|(?:E004[A-Fa-f0-9]{12}))($|[^A-Za-z0-9=\-_,+\/])/g;
+  const regexI =
+    /(^|[^A-Za-z0-9])((?:01[A-Fa-f0-9]{14})|(?:E004[A-Fa-f0-9]{12}))($|[^A-Za-z0-9=\-_,+\/])/;
   if (typeof str !== 'string') {
     return str;
   }
@@ -37,8 +33,6 @@ async function cardSanitizer(gameCode: string, str: string, refMap: any): Promis
       const did = nfc2card(cid);
       const card = await FindCard(cid);
       if (!card) {
-        const profileCount = await GetProfileCount();
-        if (profileCount < 0 || profileCount >= 16) return null;
         const newProfile = await CreateProfile('unset', gameCode);
         if (!newProfile) return null;
         const newCard = await CreateCard(cid, newProfile.__refid);

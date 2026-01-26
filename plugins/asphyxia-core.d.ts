@@ -1155,7 +1155,7 @@ type Update<T> = Partial<T> & {
  * you should refrain from referencing refid in your document to prevent getting residual garbage data.
  *
  * If you need to make rival/friend feature, we recommend you to get all profile data by passing null to `refid`.
- * There will be 16 profiles maximum which is small enough to manage.
+ * This method should be sufficient for playing with friends.
  *
  * All query and doc should not have any fields start with `__` while `__refid` being the only exception.
  * However, `__refid` field will still be ignored while other `__` starting fields will cause an error to be thrown.

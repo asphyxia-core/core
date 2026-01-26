@@ -4,7 +4,7 @@ import { Logger } from './Logger';
 import path from 'path';
 import nedb from '@seald-io/nedb';
 import { nfc2card } from './CardCipher';
-import hashids from 'hashids/cjs'
+import hashids from 'hashids/cjs';
 import { NAMES } from './Consts';
 import { CONFIG, ARGS } from './ArgConfig';
 import { isArray, get, isPlainObject, sortBy } from 'lodash';
@@ -58,11 +58,6 @@ const LoadDatabase = async (file: string) => {
   const value = await DB.countAsync({ __s: 'profile' });
   if (value < 0) {
     Logger.error('Profile indexes is corrupted. Can not load database.');
-    process.exit(1);
-  }
-
-  if (value > 16) {
-    Logger.error('Profile table is corrupted. Can not load database.');
     process.exit(1);
   }
 

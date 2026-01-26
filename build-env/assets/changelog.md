@@ -1,3 +1,7 @@
+## v1.60a
+- **CORE**: Core is now open-source.
+- **CORE**: Removed 16 profile count limit.
+
 ## v1.50e
 - **CORE**: Change country code from `AX` to `JP` in `facility.get`
 
