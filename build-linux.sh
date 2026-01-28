@@ -7,6 +7,8 @@ regex='VERSION = '"'"'([a-z0-9.]*)'"'"''
 
 VERSION=${BASH_REMATCH[1]}
 
+export NODE_OPTIONS=--openssl-legacy-provider
+
 echo "Building Version $VERSION for Linux"
 
 echo "NPM Install"

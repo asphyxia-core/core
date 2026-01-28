@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFile, readFile, readdir, unlink } from 'fs';
+import { existsSync, mkdirSync, readFileSync, writeFile, readFile, readdir, unlink, WriteFileOptions } from 'fs';
 
 import { Logger } from './Logger';
 import path from 'path';
@@ -161,7 +161,7 @@ export async function WriteFile(
   plugin: PluginDetect,
   file: string,
   data: string | Buffer,
-  options: { encoding?: string | null; mode?: number | string; flag?: string } | string | null
+  options: WriteFileOptions
 ) {
   const target = path.resolve(PLUGIN_PATH, plugin.identifier, file);
 
@@ -202,7 +202,7 @@ export async function DeleteFile(plugin: PluginDetect, file: string) {
 export async function ReadFile(
   plugin: PluginDetect,
   file: string,
-  options: { encoding?: string | null; flag?: string } | string | undefined | null
+  options: { encoding?: BufferEncoding | null; flag?: string } | BufferEncoding | undefined | null
 ) {
   const target = path.resolve(PLUGIN_PATH, plugin.identifier, file);
 
