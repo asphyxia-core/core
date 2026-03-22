@@ -15,3 +15,5 @@ build-env/*
 .vscode
 .vs
 .env
+.agents
+tsconfig.tsbuildinfo

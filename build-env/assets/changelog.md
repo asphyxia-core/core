@@ -1,11 +1,19 @@
+## v1.60b
+
+- **WebUI**: Removed profile limit indicator in WebUI
+- **CORE**: Fixed game crashing due to JP region check
+
 ## v1.60a
+
 - **CORE**: Core is now open-source.
 - **CORE**: Removed 16 profile count limit.
 
 ## v1.50e
+
 - **CORE**: Change country code from `AX` to `JP` in `facility.get`
 
 ## v1.50d
+
 - **CORE**: Fix a problem where `kencode` would crash if any array is empty
 
 ## v1.50c
