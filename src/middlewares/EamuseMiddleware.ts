@@ -113,23 +113,45 @@ export const EamuseMiddleware: RequestHandler = async (req, res, next) => {
       return;
     }
 
-    const eaModule = findKey(
+    let eaModule = findKey(
       get(xml, 'call'),
       x => has(x, '@attr.method') || has(x, '0.@attr.method')
-    );
+    )
+
+    if (eaModule === undefined && req.url.includes("fnc")) {
+      eaModule = "sppass";
+      Logger.debug(`${req.url}`)
+    }
 
     if (!eaModule) {
       res.sendStatus(404);
       return;
     }
 
-    let moduleObj: any[] = get(xml, `call.${eaModule}`, null);
-    if (!isArray(moduleObj)) moduleObj = [moduleObj];
+    let eaMethod = undefined;
+    let model = undefined;
+    let token = undefined;
 
-    const eaMethods: string[] = moduleObj.map(x => get(x, `@attr.method`));
-    const eaMethod = eaMethods.join('.');
-    const model = get(xml, 'call.@attr.model');
+    if (eaModule !== 'sppass') {
+      let moduleObj: any[] = get(xml, `call.${eaModule}`, null);
+      if (!isArray(moduleObj)) moduleObj = [moduleObj];
 
+      const eaMethods: string[] = moduleObj.map(x => get(x, `@attr.method`));
+      eaMethod = eaMethods.join('.');
+      model = get(xml, 'call.@attr.model');
+    } else {
+      const urlParams = new URLSearchParams(req.url.split('?')[1]);
+      eaMethod = urlParams.get('fnc');
+      model = urlParams.get('sic');
+
+      // Since SPPass doesn't send XML data, we need to get token from URL parameters and construct a fake XML data for further processing.
+      token = { call: { sppass: { "@attr": { token: urlParams.get('token') || "" } } } };
+
+      // rewind url encoding
+      model = decodeURIComponent(model || '');
+      xml = token;
+    }
+    
     if (!(process as any).pkg) {
       Logger.debug(`${eaModule}.${eaMethod}\n${dataToXML(xml, false)}`);
     }
