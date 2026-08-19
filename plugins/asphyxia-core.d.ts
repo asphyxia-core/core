@@ -133,7 +133,7 @@ declare interface FileOption {
  * Response options
  */
 declare interface EamuseSendOption {
-  status?: number;
+  status?: number | string;
 
   /**
    * Encode response with specified encoding
@@ -151,6 +151,9 @@ declare interface EamuseSendOption {
   compress?: boolean;
   kencode?: boolean;
   encrypt?: boolean;
+
+  format?: boolean;
+  header?: boolean;
 }
 
 declare interface EamuseSend {
