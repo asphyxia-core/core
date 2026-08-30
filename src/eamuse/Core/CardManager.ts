@@ -55,6 +55,7 @@ cardmng.add('cardmng.inquire', async (info, data, send) => {
       dataid: card.__refid,
       ecflag: 1,
       expired: 0,
+      lastupdate: Math.floor(card.updatedAt.getTime() / 1000),
       newflag: 0,
       refid: card.__refid,
     },
