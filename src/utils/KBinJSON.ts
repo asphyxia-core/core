@@ -898,7 +898,7 @@ export function dataToXML(data: any, header: boolean = true): string {
   else return xml;
 }
 
-export function dataToXMLBuffer(data: any, encoding: KBinEncoding): Buffer {
+export function dataToXMLBuffer(data: any, option: any): Buffer {
   const options = {
     attributeNamePrefix: '',
     attrNodeName: '@attr',
@@ -908,14 +908,15 @@ export function dataToXMLBuffer(data: any, encoding: KBinEncoding): Buffer {
     allowBooleanAttributes: false,
     parseNodeValue: true,
     parseAttributeValue: false,
-    format: true,
+    format: option.format,
     supressEmptyNode: true,
   };
 
   const parser = new json2xml(options);
   const xml = parser.parse(stringed(data));
 
-  return iconv.encode(`<?xml version='1.0' encoding='${ICONV2XML[encoding]}'?>\n${xml}`, encoding);
+  if (option.header) return iconv.encode(`<?xml version='1.0' encoding='${ICONV2XML[option.encoding]}'?>\n${xml}`, option.encoding);
+  else return iconv.encode(xml, option.encoding);
 }
 
 export function detectXMLEncoding(xml: Buffer): KBinEncoding {

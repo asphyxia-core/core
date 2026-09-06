@@ -86,7 +86,7 @@ export const services = (port: number, plugins: EamusePlugin[]) => {
         {
           '@attr': {
             name: 'keepalive',
-            url: `http://${ping_ip}/core/keepalive?pa=${ping_ip}&ia=${ping_ip}&ga=${ping_ip}&ma=${ping_ip}&t1=2&t2=10`,
+            url: `http://${ping_ip}/core/keepalive?pa=${ping_ip}&ia=${ping_ip}&ga=${ping_ip}&ma=${ping_ip}&t1=2&t2=10&rt=4`,
           },
         },
       ],
