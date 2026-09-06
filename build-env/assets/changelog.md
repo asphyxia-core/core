@@ -1,3 +1,11 @@
+## v1.70a
+
+- **CORE**: Added `lastupdate` field to `cardmng.inquire` responses
+- **CORE**: Added reverse proxy support via headers
+- **CORE**: Fixed eamuse service URLs to include ports when not using a reverse proxy
+- **CORE**: Added `rt` attribute to keepalive responses to fix network warnings on legacy games
+- **API**: `EamuseSendOption` now accepts `format`/`header` options and string `status` for legacy game compatibility
+
 ## v1.60b
 
 - **WebUI**: Removed profile limit indicator in WebUI
