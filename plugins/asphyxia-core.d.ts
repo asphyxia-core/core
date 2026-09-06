@@ -1052,6 +1052,15 @@ declare namespace U {
    * @param encoding see [[KEncoding]]
    */
   function DecodeString(buffer: Buffer, encoding: KEncoding): string;
+
+  /**
+   * Allow to set a token for cardless authentication.
+   *
+   * returns a string
+   * @param token token to set.
+   * @param refid refid of the profile to set token for. 
+   */
+  function SetSPPassToken(token: string, refid: string): void;
 }
 
 /** @ignore */
