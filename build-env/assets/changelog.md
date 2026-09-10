@@ -1,3 +1,7 @@
+## v1.70b
+
+- **CORE**: Fixed eamuse service URLs including the local port when not using a reverse proxy
+
 ## v1.70a
 
 - **CORE**: Added `lastupdate` field to `cardmng.inquire` responses
