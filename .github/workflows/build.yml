@@ -8,82 +8,33 @@ on:
       - master
   workflow_dispatch:
 jobs:
-  build-linux:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
-      - uses: actions/setup-node@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: '16.20.1'
-      - run: bash build-linux.sh
+          bun-version: 1.4.2
+      - run: bun install --frozen-lockfile
+      - run: bun run build
       - uses: actions/upload-artifact@v4
         with:
-          name: core-artifact-linux
-          path: build/*.zip
-  build-win:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '16.20.1'
-      - run: pwsh build-win.ps1
-      - uses: actions/upload-artifact@v4
-        with:
-          name: core-artifact-windows
-          path: build/*.zip
-  build-arm:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
-      - run: bash build-arm-pre.sh
-      - uses: uraimo/run-on-arch-action@v3.0.1
-        name: Run commands
-        id: runcmd
-        with:
-          arch: aarch64
-          distro: ubuntu24.04
-          githubToken: ${{ github.token }}
-          install: |
-            apt-get update
-            apt-get install -y curl zip
-            curl -sL https://deb.nodesource.com/setup_16.x | bash -
-            apt-get install -y nodejs
-          run: |
-            bash build-arm-build.sh
-      - run: bash build-arm-post.sh
-      - uses: actions/upload-artifact@v4
-        with:
-          name: core-artifact-arm64
+          name: core-artifact
           path: build/*.zip
   release:
     name: Create Release
-    needs: [build-linux, build-win, build-arm]
+    needs: [build]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     permissions:
       contents: write
     steps:
-      - name: Download Linux artifacts
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: core-artifact-linux
-          path: ./artifacts
-      - name: Download Windows artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: core-artifact-windows
-          path: ./artifacts
-      - name: Download ARM artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: core-artifact-arm64
+          name: core-artifact
           path: ./artifacts
       - name: Display structure of downloaded files
         run: ls -R ./artifacts

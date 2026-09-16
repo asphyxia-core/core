@@ -1,8 +1,6 @@
-import { Router } from 'express';
-import { urlencoded, json } from 'body-parser';
+import { Router, urlencoded, json } from '../http/Engine';
 import { ROOT_CONTAINER } from '../eamuse/index';
 import { Logger } from '../utils/Logger';
-import multer from 'multer';
 import { WriteFile, DeleteFile, Resolve } from '../utils/EamuseIO';
 import { DATAFILE_MAP } from '../utils/ArgConfig';
 import { WebUISend } from '../eamuse/EamusePlugin';
@@ -80,10 +78,8 @@ ajax.post(
   }
 );
 
-var storage = multer.memoryStorage();
-var upload = multer({ storage: storage });
 // File upload
-ajax.post('/upload/:path', upload.single('upload'), async (req, res) => {
+ajax.post('/upload/:path', async (req, res) => {
   if (!req.headers.referer) {
     res.sendStatus(400);
     return;
@@ -103,7 +99,22 @@ ajax.post('/upload/:path', upload.single('upload'), async (req, res) => {
 
   const path = req.params.path;
   if (DATAFILE_MAP[plugin.Identifier] && DATAFILE_MAP[plugin.Identifier].has(path)) {
-    WriteFile({ identifier: plugin.Identifier, core: true }, path, req.file.buffer, {
+    let upload: any = null;
+    try {
+      const form = await req.formData();
+      upload = form.get('upload');
+    } catch {
+      res.sendStatus(400);
+      return;
+    }
+
+    if (!upload || typeof upload === 'string') {
+      res.sendStatus(400);
+      return;
+    }
+
+    const buffer = Buffer.from(await upload.arrayBuffer());
+    WriteFile({ identifier: plugin.Identifier, core: true }, path, buffer, {
       encoding: null,
     });
 
@@ -113,7 +124,7 @@ ajax.post('/upload/:path', upload.single('upload'), async (req, res) => {
   }
 });
 
-ajax.delete('/upload/:path', upload.single('upload'), async (req, res) => {
+ajax.delete('/upload/:path', async (req, res) => {
   if (!req.headers.referer) {
     res.sendStatus(400);
     return;

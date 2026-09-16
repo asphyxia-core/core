@@ -1,9 +1,8 @@
 // import { Encoding, codeToString, convert, stringToCode } from 'encoding-japanese';
 import iconv from 'iconv-lite';
 
-import xml2json from 'fast-xml-parser';
 import { toSafeInteger, isArrayLike, get, isArray, isNil } from 'lodash';
-import json2xml = xml2json.j2xParser;
+import { buildXml, parseXmlInternal } from './Xml';
 
 import { BinaryLengthType, ReadBuffer, WriteBuffer } from './AutoBuffer';
 
@@ -878,42 +877,14 @@ function unstringed(data: any): any {
 }
 
 export function dataToXML(data: any, header: boolean = true): string {
-  const options = {
-    attributeNamePrefix: '',
-    attrNodeName: '@attr',
-    textNodeName: '@content',
-    ignoreAttributes: false,
-    ignoreNameSpace: false,
-    allowBooleanAttributes: false,
-    parseNodeValue: true,
-    parseAttributeValue: false,
-    format: true,
-    supressEmptyNode: true,
-  };
-
-  const parser = new json2xml(options);
-  const xml = parser.parse(stringed(data));
+  const xml = buildXml(stringed(data), true);
 
   if (header) return "<?xml version='1.0' encoding='UTF-8'?>\n" + xml;
   else return xml;
 }
 
 export function dataToXMLBuffer(data: any, option: any): Buffer {
-  const options = {
-    attributeNamePrefix: '',
-    attrNodeName: '@attr',
-    textNodeName: '@content',
-    ignoreAttributes: false,
-    ignoreNameSpace: false,
-    allowBooleanAttributes: false,
-    parseNodeValue: true,
-    parseAttributeValue: false,
-    format: option.format,
-    supressEmptyNode: true,
-  };
-
-  const parser = new json2xml(options);
-  const xml = parser.parse(stringed(data));
+  const xml = buildXml(stringed(data), option.format !== false);
 
   if (option.header) return iconv.encode(`<?xml version='1.0' encoding='${ICONV2XML[option.encoding]}'?>\n${xml}`, option.encoding);
   else return iconv.encode(xml, option.encoding);
@@ -941,19 +912,7 @@ export function xmlToData(xml: string | Buffer, encoding?: KBinEncoding): any {
     xmlStr = iconv.decode(xmlStr, encoding);
   }
 
-  const options = {
-    attributeNamePrefix: '',
-    attrNodeName: '@attr',
-    textNodeName: '@content',
-    ignoreAttributes: false,
-    ignoreNameSpace: false,
-    allowBooleanAttributes: false,
-    parseNodeValue: false,
-    parseAttributeValue: false,
-    trimValues: true,
-  };
-
-  const data = unstringed(xml2json.parse(xmlStr, options));
+  const data = unstringed(parseXmlInternal(xmlStr));
 
   return data;
 }

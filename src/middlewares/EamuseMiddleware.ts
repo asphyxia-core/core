@@ -1,5 +1,6 @@
-import { RequestHandler } from 'express';
-import { findKey, get, has, isArray } from 'lodash';
+import { Handler, HttpRequest, HttpResponse } from '../http/Engine';
+import { IS_PACKAGED } from '../utils/Env';
+import { findKey, get, has } from 'lodash';
 
 import {
   isKBin,
@@ -37,7 +38,7 @@ export interface EamuseInfo {
   model: string;
 }
 
-function forwardedHeader(req: any, name: string) {
+function forwardedHeader(req: HttpRequest, name: string) {
   const value = req.headers?.[name];
   if (typeof value !== 'string') {
     return '';
@@ -59,13 +60,13 @@ function stripPort(host: string) {
   return colonIndex > 0 ? host.slice(0, colonIndex) : host;
 }
 
-export const EamuseMiddleware: RequestHandler = async (req, res, next) => {
+export const EamuseMiddleware: Handler = async (req, res, next) => {
   res.set('X-Powered-By', 'Asphyxia');
 
   const agent = req.headers['user-agent'] || '';
 
   if (agent.indexOf('Mozilla') >= 0) {
-    (req as any).skip = true;
+    req.skip = true;
     return next();
   }
 
@@ -77,103 +78,94 @@ export const EamuseMiddleware: RequestHandler = async (req, res, next) => {
     compress = 'none';
   }
 
-  const chunks: Buffer[] = [];
+  const data = await req.bytes();
+  if (!data) {
+    Logger.warn(`message by ${agent} is empty`);
+    res.sendStatus(404);
+    return;
+  }
 
-  req.on('data', chunk => {
-    chunks.push(Buffer.from(chunk));
-  });
+  let body = data;
+  let encrypted = false;
 
-  req.on('end', () => {
-    // Logger.debug(req.url);
-    const data = Buffer.concat(chunks);
-    if (!data) {
-      Logger.warn(`message by ${agent} is empty`);
-      res.sendStatus(404);
-      return;
+  if (eamuseInfo) {
+    encrypted = true;
+    const key = new KonmaiEncrypt(eamuseInfo.toString());
+    const decrypted = key.encrypt(body);
+    body = decrypted;
+  }
+
+  if (body && compress === 'lz77') {
+    body = LzKN.inflate(body);
+  }
+
+  if (!body) {
+    Logger.error(`Failed to decompress message by ${agent}`);
+    res.sendStatus(404);
+    return;
+  }
+
+  let xml = null;
+  let kencoded = false;
+
+  let encoding: KBinEncoding = 'utf8';
+
+  try {
+    if (!isKBin(body)) {
+      encoding = detectXMLEncoding(body);
+      xml = xmlToData(body, encoding);
+    } else {
+      encoding = kgetEncoding(body);
+      xml = kdecode(body);
+      kencoded = true;
     }
+  } catch (err) {
+    Logger.error(`Failed to parse message by ${agent}`);
+  }
 
-    let body = data;
-    let encrypted = false;
+  if (xml == null) {
+    res.sendStatus(404);
+    return;
+  }
 
-    if (eamuseInfo) {
-      encrypted = true;
-      const key = new KonmaiEncrypt(eamuseInfo.toString());
-      const decrypted = key.encrypt(body);
-      body = decrypted;
-    }
+  const eaModule = findKey(
+    get(xml, 'call'),
+    x => has(x, '@attr.method') || has(x, '0.@attr.method')
+  );
 
-    if (body && compress === 'lz77') {
-      body = LzKN.inflate(body);
-    }
+  if (!eaModule) {
+    res.sendStatus(404);
+    return;
+  }
 
-    if (!body) {
-      Logger.error(`Failed to decompress message by ${agent}`);
-      res.sendStatus(404);
-      return;
-    }
+  let moduleObj: any[] = get(xml, `call.${eaModule}`, null);
+  if (!Array.isArray(moduleObj)) moduleObj = [moduleObj];
 
-    let xml = null;
-    let kencoded = false;
+  const eaMethods: string[] = moduleObj.map(x => get(x, `@attr.method`));
+  const eaMethod = eaMethods.join('.');
+  const model = get(xml, 'call.@attr.model');
 
-    let encoding: KBinEncoding = 'utf8';
+  if (!IS_PACKAGED) {
+    Logger.debug(`${eaModule}.${eaMethod}\n${dataToXML(xml, false)}`);
+  }
 
-    try {
-      if (!isKBin(body)) {
-        encoding = detectXMLEncoding(body);
-        xml = xmlToData(body, encoding);
-      } else {
-        encoding = kgetEncoding(body);
-        xml = kdecode(body);
-        kencoded = true;
-      }
-    } catch (err) {
-      Logger.error(`Failed to parse message by ${agent}`);
-    }
-
-    if (xml == null) {
-      res.sendStatus(404);
-      return;
-    }
-
-    const eaModule = findKey(
-      get(xml, 'call'),
-      x => has(x, '@attr.method') || has(x, '0.@attr.method')
-    );
-
-    if (!eaModule) {
-      res.sendStatus(404);
-      return;
-    }
-
-    let moduleObj: any[] = get(xml, `call.${eaModule}`, null);
-    if (!isArray(moduleObj)) moduleObj = [moduleObj];
-
-    const eaMethods: string[] = moduleObj.map(x => get(x, `@attr.method`));
-    const eaMethod = eaMethods.join('.');
-    const model = get(xml, 'call.@attr.model');
-
-    if (!(process as any).pkg) {
-      Logger.debug(`${eaModule}.${eaMethod}\n${dataToXML(xml, false)}`);
-    }
-
-    req.body = {
-      data: xml,
-      buffer: data,
-      module: eaModule as string,
-      method: eaMethod as string,
-      compress: compress == 'lz77',
-      encrypted,
-      encoding,
-      kencoded,
-      model,
-    } as EABody;
-    next();
-  });
+  req.body = {
+    data: xml,
+    buffer: data,
+    module: eaModule as string,
+    method: eaMethod as string,
+    compress: compress == 'lz77',
+    encrypted,
+    encoding,
+    kencoded,
+    model,
+  } as EABody;
+  next();
 };
 
-export const EamuseRoute = (router: EamuseRootRouter): RequestHandler => {
-  const route: RequestHandler = async (req, res, next) => {
-    if ((req as any).skip) {
+export const EamuseRoute = (router: EamuseRootRouter): Handler => {
+  const route: Handler = async (req, res, next) => {
+    if (req.skip) {
       next();
       return;
     }
@@ -183,14 +175,14 @@ export const EamuseRoute = (router: EamuseRootRouter): RequestHandler => {
     const gameCode = body.model.split(':')[0];
 
     const send = new EamuseSend(body, res);
-    const data = get(body.data, `call.${body.module}`);
-    const info = { gameCode, module: body.module, method: body.method, model: body.model };
+    const data = (body.data as any).call[body.module];
+    const info: any = { gameCode, module: body.module, method: body.method, model: body.model };
 
     // HACK: give facility ip
     if (body.module == 'facility' && body.method == 'get') {
       const forwardedFor = forwardedHeader(req, 'x-forwarded-for');
       const clientIp = forwardedFor || req.ip;
-      (info as any).ip = clientIp.includes(':') ? '127.0.0.1' : clientIp;
+      info.ip = clientIp.includes(':') ? '127.0.0.1' : clientIp;
     }
 
     // HACK: give services host
@@ -198,11 +190,9 @@ export const EamuseRoute = (router: EamuseRootRouter): RequestHandler => {
       const forwardedHost = forwardedHeader(req, 'x-forwarded-host');
       const forwardedProto = forwardedHeader(req, 'x-forwarded-proto');
 
-      (info as any).host = forwardedHost
-        ? stripPort(forwardedHost)
-        : req.hostname;
-      (info as any).protocol = forwardedProto || req.protocol;
-      (info as any).proxy = Boolean(forwardedHost || forwardedProto);
+      info.host = forwardedHost ? stripPort(forwardedHost) : req.hostname;
+      info.protocol = forwardedProto || req.protocol;
+      info.proxy = Boolean(forwardedHost || forwardedProto);
     }
 
     try {

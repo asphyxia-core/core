@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router } from '../http/Engine';
 
 import { EamuseMiddleware, EamuseRoute } from '../middlewares/EamuseMiddleware';
 import { core } from './Core';

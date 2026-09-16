@@ -3,7 +3,15 @@ import { EamuseInfo } from '../middlewares/EamuseMiddleware';
 import { EamuseSend } from './EamuseSend';
 import { isNil } from 'lodash';
 import { Logger } from '../utils/Logger';
-import { PLUGIN_PATH, APIFindOne, APIFind } from '../utils/EamuseIO';
+import {
+  PLUGIN_PATH,
+  APIFindOne,
+  APIFind,
+  Resolve,
+  Exists,
+  ReadFile,
+  ReadDir,
+} from '../utils/EamuseIO';
 import path from 'path';
 import { readdirSync, readFileSync } from 'fs';
 import { FindCard, CreateProfile, CreateCard, BindProfile } from '../utils/EamuseIO';
@@ -171,12 +179,26 @@ export class EamusePlugin {
     const U = {
       GetConfig: nothingFunc,
     };
+    // read-only IO is available to DATA expressions, like DB
+    const nothingAsync = () => Promise.resolve(undefined);
+    const IO = {
+      Resolve: nothingFunc,
+      Exists: nothingFunc,
+      ReadFile: nothingAsync,
+      ReadDir: nothingAsync,
+    };
 
-    if (isProfile) {
-      const refid: any = undefined;
-      eval(expression);
-    } else {
-      eval(expression);
+    const result = (() => {
+      if (isProfile) {
+        const refid: any = undefined;
+        return eval(expression);
+      }
+      return eval(expression);
+    })();
+
+    // expressions may return promises (DB/IO); ignore their rejections here
+    if (result && typeof result.catch === 'function') {
+      result.catch(() => {});
     }
   }
 
@@ -283,8 +305,14 @@ export class EamusePlugin {
       },
     };
 
-    const IO = {},
-      $ = {},
+    const pluginDetect = { identifier: this.pluginIdentifier, core: false };
+    const IO = {
+      Resolve: (file: string) => Resolve(pluginDetect, file),
+      Exists: (file: string) => Exists(pluginDetect, file),
+      ReadFile: (file: string, options?: any) => ReadFile(pluginDetect, file, options),
+      ReadDir: (file: string) => ReadDir(pluginDetect, file),
+    };
+    const $ = {},
       R = {},
       K = {};
 

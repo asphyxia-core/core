@@ -5,7 +5,7 @@ import { ARGS } from '../ArgConfig';
 import { PrepareDirectory } from '../EamuseIO';
 import { Logger } from '../Logger';
 
-const EXEC_PATH = path.resolve((process as any).pkg ? path.dirname(process.argv0) : process.cwd());
+import { EXEC_PATH } from '../Env';
 const OLD_SAVE_PATH = path.join(EXEC_PATH, 'savedata.db');
 const NEW_SAVE_PATH = path.resolve(EXEC_PATH, ARGS.savedata);
 

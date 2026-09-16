@@ -1,9 +1,6 @@
-import { Router, RequestHandler, Request } from 'express';
+import { Router, RequestHandler, HttpRequest } from '../http/Engine';
 import { existsSync, readFileSync } from 'fs';
-import session from 'express-session';
-import cookies from 'cookie-parser';
-import createMemoryStore from 'memorystore';
-import flash from 'connect-flash';
+import { session } from '../http/Session';
 import { VERSION } from '../utils/Consts';
 import {
   CONFIG_MAP,
@@ -40,17 +37,15 @@ import {
   APIUpsert,
   APICount,
 } from '../utils/EamuseIO';
-import { urlencoded, json } from 'body-parser';
+import { urlencoded, json } from '../http/Engine';
 import path from 'path';
 import { ROOT_CONTAINER } from '../eamuse/index';
 import { fun } from './fun';
 import { card2nfc, nfc2card, cardType } from '../utils/CardCipher';
 import { groupBy, startCase, lowerCase, upperFirst } from 'lodash';
-import { sizeof } from 'sizeof';
+import { sizeof } from '../utils/Sizeof';
 import { ajax as emit } from './emit';
 import { Logger } from '../utils/Logger';
-
-const memorystore = createMemoryStore(session);
 
 export const webui = Router();
 webui.use(
@@ -59,12 +54,8 @@ webui.use(
     secret: 'c0dedeadc0debeef',
     resave: true,
     saveUninitialized: false,
-    store: new memorystore({ checkPeriod: 300000 }),
   })
 );
-webui.use(cookies());
-
-webui.use(flash());
 let wrap = (fn: RequestHandler) => (...args: any[]) => (fn as any)(...args).catch(args[2]);
 
 webui.use('/fun', fun);
@@ -77,7 +68,7 @@ const markdown = new Converter({
   tasklists: true,
 });
 
-function data(req: Request, title: string, plugin: string, attr?: any) {
+function data(req: HttpRequest, title: string, plugin: string, attr?: any) {
   const formOk = req.flash('formOk');
   const formWarn = req.flash('formWarn');
   const aside = req.cookies.asidemenu == 'true';
@@ -714,5 +705,6 @@ webui.use(async (req, res, next) => {
 
 // 500 - Any server error
 webui.use((err: any, req: any, res: any, next: any) => {
+  Logger.error(err);
   return res.status(500).render('500', data(req, '500 - Oops', 'core', { err }));
 });

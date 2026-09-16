@@ -15,6 +15,7 @@ import {
   getStr,
 } from '../utils/KBinJSON';
 import { Logger } from '../utils/Logger';
+import { parseXmlSimple } from '../utils/Xml';
 import { KDataReader } from '../utils/KDataReader';
 import {
   PLUGIN_PATH,
@@ -31,7 +32,7 @@ import {
   APICount,
   Exists,
 } from '../utils/EamuseIO';
-import { readdirSync, existsSync } from 'fs';
+import { readdirSync } from 'fs';
 import {
   ARGS,
   PluginRegisterConfig,
@@ -42,7 +43,6 @@ import {
 } from '../utils/ArgConfig';
 import { EamusePlugin, WebUIEventHandler } from './EamusePlugin';
 import { EamuseRouteHandler } from './EamuseRouteContainer';
-import xml2json from 'fast-xml-parser';
 import _ from 'lodash';
 import { isPlainObject } from 'lodash';
 import { VERSION } from '../utils/Consts';
@@ -97,22 +97,6 @@ export function LoadExternalPlugins() {
   /* Exposing API */
   const $: any = global;
 
-  const tsconfig = path.join(PLUGIN_PATH, 'tsconfig.json');
-  /* ncc/pkg hack */
-  // require('typescript');
-  const ts_node = require('ts-node');
-  if (existsSync(tsconfig)) {
-    /* Inject ts-node */
-    ts_node.register({
-      project: tsconfig,
-      typeCheck: false,
-      files: false,
-      transpileOnly: ARGS.dev ? false : true,
-    });
-  } else {
-    ts_node.register({ typeCheck: false, files: false, transpileOnly: ARGS.dev ? false : true });
-  }
-
   $.$ = (data: any) => {
     if (!isPlainObject(data)) {
       throw new Error('data is not a plain object. (Did you pass a KDataReader as data?)');
@@ -161,7 +145,7 @@ export function LoadExternalPlugins() {
     toXML: dataToXML,
     parseXML: (xml: string, simplify: boolean = true) => {
       if (simplify) {
-        return xml2json.parse(xml);
+        return parseXmlSimple(xml);
       } else {
         return xmlToData(xml);
       }
