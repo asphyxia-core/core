@@ -291,6 +291,23 @@ webui.post(
 );
 
 webui.post(
+  '/profile/:refid/pin-verification',
+  json(),
+  wrap(async (req, res) => {
+    const refid = req.params['refid'];
+    const { acceptAnyPin } = req.body;
+    if (typeof acceptAnyPin !== 'boolean') {
+      return res.sendStatus(400);
+    }
+    if (!(await FindProfile(refid))) {
+      return res.sendStatus(404);
+    }
+    const updated = await UpdateProfile(refid, { acceptAnyPin });
+    res.sendStatus(updated ? 204 : 500);
+  })
+);
+
+webui.post(
   '/profile/:refid',
   urlencoded({ extended: true, limit: '50mb' }),
   wrap(async (req, res) => {

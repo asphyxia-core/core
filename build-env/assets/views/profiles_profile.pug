@@ -30,6 +30,17 @@ block content
                       .field
                         .control
                           input.input(type='password' size='4' maxlength='4' placeholder='••••' name='pin')
+                  .field.is-horizontal.is-narrow
+                    .field-label
+                      label.label(for='accept-any-pin') Accept any PIN
+                    .field-body
+                      .field
+                        .control
+                          label.switch.is-rounded
+                            input#accept-any-pin(type='checkbox' role='switch' checked=profile.acceptAnyPin === true aria-describedby='pin-verification-help')
+                            span.check
+                        p.help#pin-verification-help When off, this profile requires its saved PIN.
+                        p.help.has-text-danger#pin-verification-error(role='alert')
                   .field.is-horizontal.is-narrow(data-tooltip="Only used in WebUI")
                     .field-label.is-normal
                       label.label Name

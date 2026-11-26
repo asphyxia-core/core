@@ -1,4 +1,21 @@
 (() => {
+  $('#accept-any-pin').on('change', async e => {
+    const setting = e.currentTarget;
+    const acceptAnyPin = setting.checked;
+    const errorMessage = $('#pin-verification-error');
+    setting.disabled = true;
+    errorMessage.text('');
+
+    try {
+      await axios.post(`/profile/${$('#refid').text()}/pin-verification`, { acceptAnyPin });
+    } catch {
+      setting.checked = !acceptAnyPin;
+      errorMessage.text('Could not save the PIN setting. Try again.');
+    } finally {
+      setting.disabled = false;
+    }
+  });
+
   $('#name-input').on('input', e => {
     let target = e.currentTarget.value;
     if (e.currentTarget.value == '') {

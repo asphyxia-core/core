@@ -1,5 +1,5 @@
 import { EamuseRouteContainer } from '../EamuseRouteContainer';
-import { get } from 'lodash';
+import { get, has } from 'lodash';
 import { ROOT_CONTAINER } from '../index';
 import {
   FindCard,
@@ -44,7 +44,7 @@ cardmng.add('cardmng.inquire', async (info, data, send) => {
     return send.status(112);
   }
 
-  if (profile.pin === 'unset') {
+  if (profile.pin === 'unset' && profile.acceptAnyPin !== true) {
     // need update pin
     return send.status(112);
   }
@@ -108,7 +108,11 @@ cardmng.add('cardmng.authpass', async (info, data, send) => {
     return send.status(110);
   }
 
-  if (profile.pin !== pass) {
+  const validPin =
+    profile.acceptAnyPin === true
+      ? has(data, '@attr.pass') && typeof pass === 'string' && pass.length > 0
+      : profile.pin === pass;
+  if (!validPin) {
     return send.status(116);
   }
 
