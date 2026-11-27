@@ -2,10 +2,13 @@ import { cardmng } from './CardManager';
 import { eacoin } from './EamuseCoin';
 import { facility } from './Facility';
 import { pcbtracker } from './PCBTracker';
+import { sppass} from './SPPass';
+
 import { kitem } from '../../utils/KBinJSON';
 import { EamuseRouteContainer } from '../EamuseRouteContainer';
 import { Logger } from '../../utils/Logger';
 import { CONFIG } from '../../utils/ArgConfig';
+
 
 export const core = new EamuseRouteContainer();
 
@@ -66,3 +69,4 @@ core.add(eacoin);
 core.add(facility);
 core.add(cardmng);
 core.add(pcbtracker);
+core.add(sppass);

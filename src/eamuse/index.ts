@@ -49,6 +49,7 @@ export const services = (port: number, plugins: EamusePlugin[]) => {
     'netlog',
     'sidmgr',
     'globby',
+    'sppass'
   ];
 
   /* General Information */
